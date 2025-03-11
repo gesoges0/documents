@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ネットフリックスのアナリティクスエンジニアリング Part 2</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol&family=Yomogi&family=Zen+Kurenaido&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Zen Kurenaido', sans-serif;
+      background-color: #f8fafc;
+      color: #334155;
+      line-height: 1.4;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px dashed #593C47;
+      padding-bottom: 1rem;
+    }
+    
+    .title {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 32px;
+      font-weight: bold;
+      background: linear-gradient(45deg, #593C47, #F24405);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      position: relative;
+    }
+    
+    .title::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, #F25C05, #F2C53D);
+    }
+    
+    .subtitle {
+      font-family: 'Yomogi', cursive;
+      font-size: 20px;
+      color: #593C47;
+      margin-top: 0.5rem;
+    }
+    
+    .date {
+      font-family: 'Yomogi', cursive;
+      color: #475569;
+      font-size: 16px;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    
+    .section {
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      position: relative;
+      border: 2px solid;
+      border-image: linear-gradient(45deg, #593C47, #F24405) 1;
+    }
+    
+    .section-title {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 18px;
+      color: #1e40af;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .section-title::before {
+      content: "✦";
+      color: #F25C05;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+    
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5px;
+      height: 100%;
+      background: linear-gradient(to bottom, #F2E63D, #F24405);
+      border-radius: 12px 0 0 12px;
+    }
+    
+    .highlight {
+      background: linear-gradient(transparent 60%, #F2E63D 40%);
+      font-weight: bold;
+    }
+    
+    .keyword {
+      color: #F24405;
+      font-weight: bold;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .keyword::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: #F24405;
+    }
+    
+    .arrow {
+      font-size: 24px;
+      color: #F25C05;
+      margin: 0 0.5rem;
+    }
+    
+    .bubble {
+      background-color: rgba(242, 230, 60, 0.2);
+      border: 2px dashed #F2C53D;
+      border-radius: 20px;
+      padding: 0.75rem;
+      margin: 1rem 0;
+      position: relative;
+    }
+    
+    .bubble::before {
+      content: "💡";
+      position: absolute;
+      top: -15px;
+      left: 20px;
+    }
+    
+    .icon {
+      font-size: 1.5rem;
+      margin-right: 0.5rem;
+    }
+    
+    .step-box {
+      border: 2px solid #593C47;
+      border-radius: 10px;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      background-color: rgba(242, 197, 61, 0.1);
+    }
+    
+    .step-title {
+      font-weight: bold;
+      color: #593C47;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .team-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.5rem 0;
+    }
+    
+    .team-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: #593C47;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 2px dashed #593C47;
+      text-align: right;
+      font-size: 14px;
+      color: #475569;
+      font-family: 'Yomogi', cursive;
+    }
+    
+    .hand-drawn {
+      border: 3px solid #593C47;
+      border-radius: 15px;
+      padding: 0.75rem;
+      position: relative;
+      transform: rotate(-1deg);
+      margin-bottom: 1rem;
+    }
+    
+    .note {
+      font-family: 'Yomogi', cursive;
+      font-style: italic;
+      color: #475569;
+      margin-top: 0.5rem;
+    }
+    
+    .process-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    
+    .process-step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .step-number {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background-color: #F2C53D;
+      color: #593C47;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    
+    .skill-tag {
+      display: inline-block;
+      background-color: #F2C53D;
+      color: #593C47;
+      border-radius: 15px;
+      padding: 0.25rem 0.5rem;
+      margin: 0.25rem;
+      font-size: 0.9rem;
+    }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    
+    .metric-item {
+      background-color: rgba(242, 196, 61, 0.1);
+      border-radius: 8px;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .metric-icon {
+      font-size: 1.25rem;
+    }
+    
+    .checklist {
+      list-style-type: none;
+      padding-left: 0.5rem;
+    }
+    
+    .checklist li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .checklist li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #F25C05;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 class="title">ネットフリックスのアナリティクスエンジニアリング</h1>
+        <div class="subtitle">Part 2: データ管理と組織編</div>
+      </div>
+      <div class="date">2025年3月7日 / Netflix Tech Blog より</div>
+    </div>
+    
+    <div class="grid">
+      <div class="section">
+        <h2 class="section-title">データ管理アプローチ</h2>
+        <div class="card">
+          <p>Netflix では<span class="highlight">データの民主化</span>を重視し、全社的なデータアクセスと<span class="keyword">セルフサービス分析</span>を促進しています。</p>
+          
+          <div class="bubble">
+            <p>「<span class="keyword">Freedom & Responsibility</span>」の企業文化がデータ管理にも反映</p>
+          </div>
+          
+          <div class="hand-drawn">
+            <div class="step-title">📊 メタデータ管理</div>
+            <p>データディスカバリーツールを使用し、全社でデータカタログを一元管理</p>
+          </div>
+          
+          <div class="hand-drawn">
+            <div class="step-title">🔍 データ品質管理</div>
+            <p>自動化されたテストとモニタリングで一貫性と正確性を確保</p>
+          </div>
+          
+          <div class="hand-drawn">
+            <div class="step-title">🔐 データガバナンス</div>
+            <p>セキュリティと柔軟なアクセスのバランスを重視した分散型管理</p>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3 style="font-size: 16px; color: #593C47;">データライフサイクル 🔄</h3>
+          <div class="process-flow">
+            <div class="process-step">
+              <div class="step-number">1</div>
+              <span>データ取得（視聴ログ、ユーザー行動など）</span>
+            </div>
+            <div class="process-step">
+              <div class="step-number">2</div>
+              <span>加工・変換（dbtモデル作成）</span>
+            </div>
+            <div class="process-step">
+              <div class="step-number">3</div>
+              <span>品質テスト・検証</span>
+            </div>
+            <div class="process-step">
+              <div class="step-number">4</div>
+              <span>分析用データマート提供</span>
+            </div>
+            <div class="process-step">
+              <div class="step-number">5</div>
+              <span>継続的なモニタリング・改善</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h2 class="section-title">組織構造とチーム連携</h2>
+        <div class="card">
+          <p>Netflixのアナリティクスエンジニアリングは<span class="highlight">分散型のマトリックス組織</span>で運営されています。</p>
+          
+          <div class="bubble">
+            <p>「<span class="keyword">埋め込み型</span>」と「<span class="keyword">中央型</span>」のハイブリッドモデルを採用</p>
+          </div>
+          
+          <div style="margin-top: 1rem;">
+            <div class="team-item">
+              <div class="team-icon">中</div>
+              <span><span class="keyword">中央チーム</span>：共通基盤とベストプラクティスの開発</span>
+            </div>
+            <div class="team-item">
+              <div class="team-icon">埋</div>
+              <span><span class="keyword">埋め込みチーム</span>：各ビジネスユニットに特化した分析支援</span>
+            </div>
+          </div>
+          
+          <div class="hand-drawn" style="margin-top: 1rem;">
+            <h3 style="font-size: 16px; color: #593C47;">チーム間コラボレーション 🤝</h3>
+            <ul class="checklist">
+              <li>定期的なギルドミーティングで知識共有</li>
+              <li>クロスファンクショナルなプロジェクトチーム</li>
+              <li>ドキュメント化とナレッジリポジトリの整備</li>
+              <li>内部カンファレンスと勉強会の開催</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3 style="font-size: 16px; color: #593C47;">主要ステークホルダー 👥</h3>
+          <div style="margin-top: 0.5rem;">
+            <div class="team-item">
+              <div class="team-icon">DA</div>
+              <span><span class="keyword">データアナリスト</span>：分析結果を提供</span>
+            </div>
+            <div class="team-item">
+              <div class="team-icon">DE</div>
+              <span><span class="keyword">データエンジニア</span>：データパイプライン構築</span>
+            </div>
+            <div class="team-item">
+              <div class="team-icon">PM</div>
+              <span><span class="keyword">プロダクトマネージャー</span>：要件定義と優先順位付け</span>
+            </div>
+            <div class="team-item">
+              <div class="team-icon">BU</div>
+              <span><span class="keyword">ビジネスユーザー</span>：インサイトに基づく意思決定</span>
+            </div>
+          </div>
+          
+          <div class="note">
+            ※各チームは「Netflixカルチャー」に沿った高い自律性を持ちます
+          </div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h2 class="section-title">スキルセットと能力開発</h2>
+        <div class="card">
+          <p>NetflixのAEには<span class="highlight">技術とビジネスの両面</span>での高いスキルが求められます。</p>
+          
+          <div style="margin-top: 1rem;">
+            <h3 style="font-size: 16px; color: #593C47;">必須スキル 🧠</h3>
+            <div style="display: flex; flex-wrap: wrap; margin-top: 0.5rem;">
+              <span class="skill-tag">SQL</span>
+              <span class="skill-tag">Python</span>
+              <span class="skill-tag">dbt</span>
+              <span class="skill-tag">データモデリング</span>
+              <span class="skill-tag">テスト自動化</span>
+              <span class="skill-tag">ビジネス理解</span>
+              <span class="skill-tag">コミュニケーション</span>
+              <span class="skill-tag">問題解決能力</span>
+            </div>
+          </div>
+          
+          <div class="bubble">
+            <p><span class="keyword">「T字型スキルセット」</span>を重視：一つの専門分野と幅広い知識</p>
+          </div>
+          
+          <div class="hand-drawn" style="margin-top: 1rem;">
+            <h3 style="font-size: 16px; color: #593C47;">能力開発の取り組み 📚</h3>
+            <ul class="checklist">
+              <li>メンターシッププログラム</li>
+              <li>ローテーション制度でのスキル拡張</li>
+              <li>外部カンファレンスへの参加支援</li>
+              <li>自己主導型学習の奨励</li>
+              <li>ペアプログラミングと知識共有</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3 style="font-size: 16px; color: #593C47;">キャリアパス 🚀</h3>
+          <div class="process-flow">
+            <div class="process-step">
+              <div class="step-number">1</div>
+              <span>ジュニアAE：基本的なモデル開発</span>
+            </div>
+            <div class="process-step">
+              <div class="step-number">2</div>
+              <span>シニアAE：複雑なデータモデリング</span>
+            </div>
+            <div class="process-step">
+              <div class="step-number">3</div>
+              <span>スタッフAE：アーキテクチャ設計</span>
+            </div>
+            <div class="process-step">
+              <div class="step-number">4</div>
+              <span>マネージャー/テックリード：戦略立案</span>
+            </div>
+          </div>
+          <div class="note">
+            ※専門家としての技術トラックと管理者としてのマネジメントトラックの両方が用意されています
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="margin-top: 2rem;">
+      <div class="section" style="grid-column: 1 / span 3;">
+        <h2 class="section-title">成功指標とインパクト測定</h2>
+        <div style="display: flex; gap: 1.5rem;">
+          <div class="card" style="flex: 1;">
+            <h3 style="font-size: 16px; color: #593C47;">主要成功指標（KPI） 📈</h3>
+            <div class="metrics-grid">
+              <div class="metric-item">
+                <span class="metric-icon">⏱️</span>
+                <span>データの鮮度と更新頻度</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-icon">✅</span>
+                <span>データ品質テストのパス率</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-icon">🔍</span>
+                <span>データカタログのカバレッジ</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-icon">📊</span>
+                <span>セルフサービス分析の利用率</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-icon">⚡</span>
+                <span>クエリパフォーマンスと応答時間</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-icon">👥</span>
+                <span>内部ユーザー満足度スコア</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="flex: 1;">
+            <h3 style="font-size: 16px; color: #593C47;">ビジネスインパクト 💼</h3>
+            <div class="bubble">
+              <p>アナリティクスエンジニアリングは<span class="keyword">データ資産の価値最大化</span>に貢献</p>
+            </div>
+            <ul class="checklist">
+              <li>意思決定スピードの向上</li>
+              <li>データ起点のプロダクト改善</li>
+              <li>コンテンツ投資の最適化</li>
+              <li>パーソナライゼーション精度向上</li>
+              <li>マーケティング効率の改善</li>
+              <li>運用コストの削減</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="hand-drawn" style="margin-top: 1.5rem;">
+          <h3 style="font-size: 16px; color: #593C47;">インパクト事例 🌟</h3>
+          <p>あるコンテンツ分析プロジェクトでは、データモデルの最適化により分析時間を<span class="highlight">90%削減</span>し、コンテンツ制作の意思決定プロセスを大幅に改善。結果として、より視聴者の好みに合ったコンテンツ制作を実現し、<span class="keyword">会員満足度と継続率の向上</span>に貢献しました。</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>出典: Netflix Tech Blog「Part 2: A Survey of Analytics Engineering Work at Netflix」より要約・翻訳</p>
+      <p>作成日: 2025年3月7日</p>
+    </div>
+  </div>
+</body>
+</html>
