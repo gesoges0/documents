@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netflixのマエストロとアパッチアイスバーグを使用した増分処理</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yomogi&family=Zen+Kurenaido&display=swap');
+    
+    :root {
+      --fashion-1: #593C47;
+      --fashion-2: #F2E63D;
+      --fashion-3: #F2C53D;
+      --fashion-4: #F25C05;
+      --fashion-5: #F24405;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Zen Kurenaido', sans-serif;
+      background-color: #f8f8f8;
+      color: #334155;
+      line-height: 1.4;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      overflow: hidden;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid var(--fashion-1);
+      position: relative;
+    }
+    
+    header::after {
+      content: "";
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: var(--fashion-3);
+      border-radius: 2px;
+    }
+    
+    .title {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--fashion-1), var(--fashion-5));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      position: relative;
+      padding-bottom: 5px;
+    }
+    
+    .date {
+      font-family: 'Yomogi', cursive;
+      font-size: 14px;
+      color: #475569;
+    }
+    
+    .content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .column {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .section {
+      background-color: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 2px solid transparent;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+    
+    .section-title {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 18px;
+      color: #1e40af;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+    
+    .section-title::after {
+      content: "";
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: var(--fashion-4);
+      border-radius: 2px;
+    }
+    
+    .icon {
+      font-size: 22px;
+    }
+    
+    p {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    
+    .keyword {
+      font-weight: bold;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .keyword::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 8px;
+      background-color: var(--fashion-2);
+      z-index: -1;
+      opacity: 0.6;
+      border-radius: 4px;
+    }
+    
+    .arrow {
+      position: relative;
+      margin: 15px 0;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .arrow::before {
+      content: "→";
+      font-size: 26px;
+      color: var(--fashion-4);
+      transform: rotate(90deg);
+    }
+    
+    .bubble {
+      background-color: rgba(242, 197, 60, 0.15);
+      border: 2px dashed var(--fashion-3);
+      border-radius: 20px;
+      padding: 10px 15px;
+      margin: 15px 0;
+      position: relative;
+    }
+    
+    .bubble::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 20px;
+      width: 20px;
+      height: 20px;
+      background-color: rgba(242, 197, 60, 0.15);
+      border-top: 2px dashed var(--fashion-3);
+      border-left: 2px dashed var(--fashion-3);
+      transform: rotate(45deg);
+    }
+    
+    .benefits {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .check {
+      color: var(--fashion-5);
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .diagram {
+      margin: 15px 0;
+      padding: 10px;
+      border: 2px solid var(--fashion-1);
+      border-radius: 10px;
+      position: relative;
+    }
+    
+    .diagram-title {
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background-color: white;
+      padding: 0 10px;
+      font-family: 'Kaisei Decol', serif;
+      color: var(--fashion-1);
+    }
+    
+    .diagram-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .diagram-box {
+      background-color: rgba(242, 230, 60, 0.2);
+      border: 2px solid var(--fashion-2);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      flex: 1;
+      position: relative;
+    }
+    
+    .diagram-arrow {
+      width: 30px;
+      text-align: center;
+      font-size: 20px;
+      color: var(--fashion-4);
+      position: relative;
+    }
+    
+    .hand-drawn-box {
+      position: relative;
+      margin: 20px 0;
+      padding: 15px;
+    }
+    
+    .hand-drawn-box::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 3px solid;
+      border-color: var(--fashion-3);
+      border-radius: 15px;
+      z-index: -1;
+      transform: rotate(-0.5deg);
+    }
+    
+    .hand-drawn-box::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 3px solid;
+      border-color: var(--fashion-1);
+      border-radius: 15px;
+      z-index: -2;
+      transform: rotate(1deg);
+    }
+    
+    .challenge {
+      background-color: rgba(89, 60, 71, 0.1);
+      border-radius: 10px;
+      padding: 10px;
+      margin: 10px 0;
+      position: relative;
+    }
+    
+    .challenge::before {
+      content: "⚠️";
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      background-color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .solution {
+      background-color: rgba(242, 91, 4, 0.1);
+      border-radius: 10px;
+      padding: 10px;
+      margin: 10px 0;
+      position: relative;
+    }
+    
+    .solution::before {
+      content: "💡";
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      background-color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px dashed var(--fashion-1);
+      text-align: center;
+      font-size: 12px;
+      color: #475569;
+      font-family: 'Yomogi', cursive;
+    }
+    
+    @media (max-width: 768px) {
+      .content {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 class="title">Netflixのマエストロとアパッチアイスバーグを使用した増分処理</h1>
+      <div class="date">2025年3月11日</div>
+    </header>
+    
+    <div class="content">
+      <div class="column">
+        <div class="section">
+          <h2 class="section-title"><span class="icon">📊</span>はじめに</h2>
+          <p>Netflixでは、<span class="keyword">大規模なデータ処理</span>が必要です。毎日のデータ処理は何十億もの行に及び、これを効率的に処理するために<span class="keyword">増分処理（Incremental Processing）</span>を採用しています。</p>
+          
+          <div class="bubble">
+            <p>増分処理とは、前回の処理以降に発生した<span class="keyword">新しいデータのみ</span>を処理することで、全データの再処理を避ける手法です。</p>
+          </div>
+          
+          <p>この手法により、計算リソースを節約し、処理時間を短縮できます。</p>
+        </div>
+        
+        <div class="section">
+          <h2 class="section-title"><span class="icon">🚩</span>課題</h2>
+          
+          <div class="challenge">
+            <p>伝統的なETL（抽出・変換・ロード）パイプラインでは、<span class="keyword">全データの再処理</span>が必要でした。</p>
+          </div>
+          
+          <div class="arrow"></div>
+          
+          <div class="challenge">
+            <p>これにより、<span class="keyword">計算コスト</span>と<span class="keyword">処理時間</span>が増大し、ビジネスニーズに対応できなくなっていました。</p>
+          </div>
+          
+          <div class="arrow"></div>
+          
+          <div class="solution">
+            <p>Netflixは、<span class="keyword">Maestro</span>と<span class="keyword">Apache Iceberg</span>を組み合わせた新しいアプローチを開発しました。</p>
+          </div>
+        </div>
+        
+        <div class="hand-drawn-box">
+          <h2 class="section-title"><span class="icon">💼</span>ビジネスユースケース</h2>
+          <p>Netflixでは、以下のようなユースケースで増分処理が活用されています：</p>
+          
+          <div class="benefits">
+            <div class="benefit-item">
+              <span class="check">✓</span>
+              <p><span class="keyword">パートナーアナリティクス</span>：コンテンツパートナーへの視聴データの提供</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">✓</span>
+              <p><span class="keyword">財務報告</span>：収益と費用の分析</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">✓</span>
+              <p><span class="keyword">コンテンツ分析</span>：視聴者の行動とコンテンツのパフォーマンス</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="column">
+        <div class="section">
+          <h2 class="section-title"><span class="icon">🧩</span>技術コンポーネント</h2>
+          
+          <div class="diagram">
+            <div class="diagram-title">主要テクノロジー</div>
+            <div class="diagram-content">
+              <div class="diagram-box">Apache Iceberg</div>
+              <div class="diagram-arrow">+</div>
+              <div class="diagram-box">Netflix Maestro</div>
+            </div>
+          </div>
+          
+          <h3 style="font-size: 16px; color: #475569; margin-top: 15px;">Apache Iceberg</h3>
+          <p><span class="keyword">オープンソーステーブルフォーマット</span>で、大規模なデータセットを効率的に管理します。</p>
+          
+          <div class="benefits">
+            <div class="benefit-item">
+              <span class="check">➤</span>
+              <p>スナップショットとデータのバージョニング</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">➤</span>
+              <p>スキーマ進化の管理</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">➤</span>
+              <p>パーティションとメタデータの最適化</p>
+            </div>
+          </div>
+          
+          <h3 style="font-size: 16px; color: #475569; margin-top: 15px;">Netflix Maestro</h3>
+          <p><span class="keyword">ワークフローオーケストレーションツール</span>で、複雑なデータパイプラインを管理します。</p>
+          
+          <div class="benefits">
+            <div class="benefit-item">
+              <span class="check">➤</span>
+              <p>タスク依存関係の管理</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">➤</span>
+              <p>スケジューリングとリトライの機能</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">➤</span>
+              <p>分散処理とスケーリング</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h2 class="section-title"><span class="icon">⚙️</span>増分処理の仕組み</h2>
+          
+          <div class="diagram">
+            <div class="diagram-title">基本的なフロー</div>
+            <div class="diagram-content">
+              <div class="diagram-box">データ収集</div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-box">変更検出</div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-box">増分処理</div>
+            </div>
+          </div>
+          
+          <p>この実装には、<span class="keyword">3つの主要なアプローチ</span>があります：</p>
+          
+          <ol style="padding-left: 20px; margin: 10px 0;">
+            <li><span class="keyword">タイムスタンプベース</span>：特定の時間範囲のデータのみを処理</li>
+            <li><span class="keyword">スナップショットベース</span>：Icebergのスナップショット機能を利用</li>
+            <li><span class="keyword">マニフェストベース</span>：変更ファイルのリストを使用</li>
+          </ol>
+        </div>
+      </div>
+      
+      <div class="column">
+        <div class="section">
+          <h2 class="section-title"><span class="icon">🔍</span>実装例</h2>
+          
+          <div class="hand-drawn-box">
+            <h3 style="font-size: 16px; color: #1e40af;">タイムスタンプベースの例</h3>
+            <p>Apache Sparkで実装した場合：</p>
+            <pre style="background-color: #f8f8f8; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; overflow-x: auto;">
+val newData = spark.read
+  .format("iceberg")
+  .option("snapshots", "1")
+  .load("path/to/table")
+  .where(col("event_time") > lit("2023-01-01"))
+            </pre>
+          </div>
+          
+          <div class="hand-drawn-box">
+            <h3 style="font-size: 16px; color: #1e40af;">スナップショットベースの例</h3>
+            <p>Apache Icebergの機能を使用：</p>
+            <pre style="background-color: #f8f8f8; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; overflow-x: auto;">
+// 前回のスナップショットIDを取得
+val prevSnapshot = "123456789"
+
+// 現在と前回のスナップショット間の差分を処理
+val deltaData = spark.read
+  .format("iceberg")
+  .option("start-snapshot-id", prevSnapshot)
+  .load("path/to/table")
+            </pre>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h2 class="section-title"><span class="icon">✨</span>メリット</h2>
+          
+          <div class="benefits">
+            <div class="benefit-item">
+              <span class="check">🔹</span>
+              <p><span class="keyword">処理時間の短縮</span>：全データの再処理が不要になり、処理時間が大幅に短縮</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">🔹</span>
+              <p><span class="keyword">コスト削減</span>：計算リソースの使用量が減少</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">🔹</span>
+              <p><span class="keyword">スケーラビリティ</span>：データ量が増えても処理効率を維持</p>
+            </div>
+            <div class="benefit-item">
+              <span class="check">🔹</span>
+              <p><span class="keyword">データの鮮度</span>：より頻繁なデータ更新が可能</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h2 class="section-title"><span class="icon">🏁</span>まとめ</h2>
+          <p>NetflixのMaestroとApache Icebergを組み合わせた<span class="keyword">増分処理アプローチ</span>により：</p>
+          
+          <div class="bubble">
+            <p>大規模データパイプラインの効率を<span class="keyword">10倍以上向上</span>させることができました。</p>
+          </div>
+          
+          <p>この技術は、Netflixのデータインフラストラクチャの中核となり、<span class="keyword">リアルタイムに近い分析</span>と<span class="keyword">効率的なデータ処理</span>を可能にしています。</p>
+          
+          <p>今後も、さらなる最適化とツール開発を通じて、データ処理の効率向上を目指しています。</p>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>出典: Netflix Tech Blog - Incremental Processing using Netflix Maestro and Apache Iceberg</p>
+      <p>https://netflixtechblog.com/incremental-processing-using-netflix-maestro-and-apache-iceberg-b8ba072ddeeb</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netflixアナリティクスエンジニアリングの概要</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yomogi&family=Zen+Kurenaido&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Zen Kurenaido', sans-serif;
+      background-color: #fafafa;
+      color: #334155;
+      line-height: 1.4;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 30px;
+      background: linear-gradient(45deg, #593C47, #F24405);
+      color: white;
+      position: relative;
+    }
+    
+    header::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: url("data:image/svg+xml,%3Csvg width='100%25' height='5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 Q25,5 50,0 T100,0 T150,0 T200,0 T250,0 T300,0' fill='none' stroke='%23F2E63D' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x;
+    }
+    
+    .title {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 32px;
+      font-weight: bold;
+      background: linear-gradient(to right, #F2E63D, #F24405);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .date {
+      font-family: 'Yomogi', cursive;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .content {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 30px;
+      gap: 20px;
+    }
+    
+    .column {
+      flex: 1;
+      min-width: calc(33% - 20px);
+    }
+    
+    .section {
+      background-color: rgba(255, 255, 255, 0.7);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      position: relative;
+      border: 2px solid;
+      border-image: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' stroke='%23593C47' stroke-width='3' stroke-dasharray='6,3' stroke-dashoffset='0' stroke-linecap='round'/%3E%3C/svg%3E") 1;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(5px);
+    }
+    
+    .section-header {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 18px;
+      color: #1e40af;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #F2C53D;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-header::before {
+      content: "✦";
+      color: #F25C05;
+    }
+    
+    .text-highlight {
+      background: linear-gradient(transparent 60%, #F2E63D 40%);
+      font-weight: bold;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+    
+    .card::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      right: 10px;
+      width: 40px;
+      height: 12px;
+      background: url("data:image/svg+xml,%3Csvg width='40' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 Q20,12 40,0' fill='none' stroke='%23F25C05' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat;
+    }
+    
+    .concept {
+      font-family: 'Yomogi', cursive;
+      color: #593C47;
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    
+    .arrow {
+      display: block;
+      margin: 15px auto;
+      width: 30px;
+      height: 30px;
+      background: url("data:image/svg+xml,%3Csvg width='30' height='30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15,5 L15,25 M5,15 L15,25 L25,15' fill='none' stroke='%23F24405' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat;
+    }
+    
+    .arrow-right {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5,10 L15,10 M10,5 L15,10 L10,15' fill='none' stroke='%23F25C05' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat;
+      vertical-align: middle;
+    }
+    
+    .bubble {
+      position: relative;
+      background-color: rgba(242, 230, 61, 0.2);
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin: 15px 0;
+      font-family: 'Yomogi', cursive;
+    }
+    
+    .bubble::before {
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 10px solid rgba(242, 230, 61, 0.2);
+      top: -10px;
+      left: 20px;
+    }
+    
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      background-color: #F2C53D;
+      color: #593C47;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    
+    .icon {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+    
+    footer {
+      padding: 15px;
+      text-align: center;
+      border-top: 1px dashed #593C47;
+      font-size: 12px;
+      color: #475569;
+    }
+    
+    @media (max-width: 900px) {
+      .column {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 class="title">Netflixアナリティクスエンジニアリングの概要</h1>
+      <div class="date">2025年3月9日</div>
+    </header>
+    
+    <div class="content">
+      <div class="column">
+        <div class="section">
+          <h2 class="section-header">Netflixのアナリティクスエンジニアリングとは</h2>
+          <p>Netflixでは、<span class="text-highlight">データドリブン</span>な意思決定を支援するために、アナリティクスエンジニアリングが重要な役割を担っています。</p>
+          
+          <div class="card">
+            <p><span class="concept">定義：</span>アナリティクスエンジニアリングとは、データエンジニアリングとデータ分析の間に位置する専門分野で、生データを意思決定に使える形に変換する役割を担います。</p>
+          </div>
+          
+          <div class="bubble">
+            <p>「データの民主化」が目標！誰もが簡単にデータにアクセスして活用できる環境を構築します 📊</p>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h2 class="section-header">Netflixのデータインフラストラクチャ</h2>
+          
+          <div class="card">
+            <p><span class="concept">⚙️ 基盤技術：</span></p>
+            <span class="tag">Spark</span>
+            <span class="tag">Iceberg</span>
+            <span class="tag">Delta Lake</span>
+            <span class="tag">dbt</span>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">📦 データレイク：</span>S3を使用した大規模データレイクを構築</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">⚡ 処理エンジン：</span>Sparkベースの分散処理システムで大規模データを効率的に処理</p>
+          </div>
+          
+          <div class="arrow"></div>
+          
+          <div class="card">
+            <p><span class="concept">🔄 データフロー：</span></p>
+            <p>生データ <span class="arrow-right"></span> 変換処理 <span class="arrow-right"></span> 分析用データセット</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="column">
+        <div class="section">
+          <h2 class="section-header">主要な業務内容</h2>
+          
+          <div class="card">
+            <p><span class="concept">📊 データモデリング：</span></p>
+            <p>生データを分析しやすい形に構造化して、<span class="text-highlight">使いやすいデータモデル</span>を設計します。</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">🔍 データ品質管理：</span></p>
+            <p>データの正確性、一貫性、完全性を確保するための<span class="text-highlight">品質チェック</span>と<span class="text-highlight">監視システム</span>を実装します。</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">🛠 ツール開発：</span></p>
+            <p>データ分析を効率化するための<span class="text-highlight">内部ツール</span>や<span class="text-highlight">フレームワーク</span>を開発します。</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">📚 メタデータ管理：</span></p>
+            <p>データカタログやデータ辞書を整備して、<span class="text-highlight">データの検出性</span>を高めます。</p>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h2 class="section-header">取り組み事例</h2>
+          
+          <div class="card">
+            <p><span class="concept">📺 コンテンツ分析：</span></p>
+            <p>視聴データを分析して、人気コンテンツの特徴や視聴パターンを把握します。</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">👥 ユーザー行動分析：</span></p>
+            <p>ユーザーの操作ログから行動パターンを分析し、UI/UXの改善に活用します。</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">💰 ビジネスインテリジェンス：</span></p>
+            <p>収益データや市場データを分析して、事業戦略の意思決定をサポートします。</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="column">
+        <div class="section">
+          <h2 class="section-header">組織構造と連携</h2>
+          
+          <div class="card">
+            <p><span class="concept">👨‍💼 チーム編成：</span></p>
+            <p>アナリティクスエンジニアは、<span class="text-highlight">領域ごと</span>のチームに分かれて活動しています。</p>
+            <span class="tag">コンテンツチーム</span>
+            <span class="tag">マーケティングチーム</span>
+            <span class="tag">プロダクトチーム</span>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">🤝 連携関係：</span></p>
+            <p>データエンジニア <span class="arrow-right"></span> アナリティクスエンジニア <span class="arrow-right"></span> データアナリスト</p>
+            <p>各チームが緊密に連携して、<span class="text-highlight">データバリューチェーン</span>を構築しています。</p>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h2 class="section-header">課題と解決策</h2>
+          
+          <div class="card">
+            <p><span class="concept">🔄 スケーラビリティ：</span></p>
+            <p>膨大なデータ量に対応するため、<span class="text-highlight">分散処理技術</span>と<span class="text-highlight">自動化</span>を積極的に活用しています。</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">🔒 データセキュリティ：</span></p>
+            <p>個人情報保護のため、<span class="text-highlight">アクセス制御</span>と<span class="text-highlight">匿名化処理</span>を徹底しています。</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">🚀 イノベーション：</span></p>
+            <p>常に最新技術を評価し、<span class="text-highlight">継続的な改善</span>に取り組んでいます。</p>
+            <span class="tag">機械学習の活用</span>
+            <span class="tag">リアルタイム分析</span>
+            <span class="tag">自動化ツール</span>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h2 class="section-header">今後の展望</h2>
+          
+          <div class="bubble">
+            <p>「データの民主化」をさらに推進し、全社員がデータを活用できる環境の構築を目指しています 🎯</p>
+          </div>
+          
+          <div class="card">
+            <p><span class="concept">🔮 将来の方向性：</span></p>
+            <ul style="list-style: none; padding-left: 10px;">
+              <li>• AIとの統合によるデータ分析の高度化</li>
+              <li>• セルフサービス型分析ツールの拡充</li>
+              <li>• リアルタイムデータ活用の強化</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>出典：Netflix Technology Blog「Part 3: A Survey of Analytics Engineering Work at Netflix」</p>
+      <p>https://netflixtechblog.com/part-3-a-survey-of-analytics-engineering-work-at-netflix-e67f0aa82183</p>
+    </footer>
+  </div>
+</body>
+</html>
