@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>index</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .tree {
+            margin: 0;
+            padding: 0;
+        }
+        .tree ul {
+            margin-left: 20px;
+            padding-left: 0;
+        }
+        .tree li {
+            list-style-type: none;
+            margin: 10px 0;
+            position: relative;
+        }
+        .tree li::before {
+            content: "├── ";
+            font-family: monospace;
+        }
+        .tree li:last-child::before {
+            content: "└── ";
+            font-family: monospace;
+        }
+        .folder {
+            font-weight: bold;
+            cursor: pointer;
+            color: #0066cc;
+        }
+        .file {
+            color: #333;
+        }
+        .folder::before {
+            content: "📁 ";
+        }
+        .file::before {
+            content: "📄 ";
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ファイルツリー</h1>
+    
+    <div class="tree">
+        <ul>
+            <li>
+                <span class="folder">tech-blog-netflix</span>
+                <ul>
+                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-engineering-part2.html">aaa.html</a></span></li>
+                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-engineering.html">aaa.html</a></span></li>
+                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-graphic-recording.html">aaa.html</a></span></li>
+                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-maestro-infographic.html">aaa.html</a></span></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <script>
+        // フォルダのクリックでサブフォルダの表示/非表示を切り替える
+        document.querySelectorAll('.folder').forEach(folder => {
+            folder.addEventListener('click', () => {
+                const sublist = folder.nextElementSibling;
+                if (sublist) {
+                    sublist.style.display = sublist.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
