@@ -1,5 +1,6 @@
 import yaml
 from pathlib import Path
+import textwrap
 
 def generate_html(data):
     html_content = '''<!DOCTYPE html>
@@ -59,18 +60,24 @@ def generate_html(data):
     <h1>index</h1>
     <div class="tree">
 '''
-
+    
     # Get the index array from the data
     index = data.get('index', [])
     
     for directory in index:
-        html_content += f'<ul><li><span class="folder">{directory["dir"]}</span><ul>'
+        html_content += '        <ul>\n'
+        html_content += f'            <li>\n'
+        html_content += f'                <span class="folder">{directory["dir"]}</span>\n'
+        html_content += f'                <ul>\n'
+        
         for item in directory["items"]:
-            html_content += f'<li><span class="file"><a href="https://gesoges0.github.io/documents/{directory["dir"]}/{item["name"]}.html">{item["name"]}</a> (<a href="{item["source"]}">source</a>)</span></li>'
-        html_content += '</ul></li></ul>'
+            html_content += f'                    <li><span class="file"><a href="https://gesoges0.github.io/documents/{directory["dir"]}/{item["name"]}.html">{item["name"]}</a> (<a href="{item["source"]}">source</a>)</span></li>\n'
+        
+        html_content += '                </ul>\n'
+        html_content += '            </li>\n'
+        html_content += '        </ul>\n'
 
-    html_content += '''
-    </div>
+    html_content += '''    </div>
     <script>
         document.querySelectorAll('.folder').forEach(folder => {
             folder.addEventListener('click', () => {
