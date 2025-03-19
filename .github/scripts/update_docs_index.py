@@ -36,11 +36,16 @@ def main():
     new_files_str = os.environ.get("NEW_FILES", "")
     new_files = new_files_str.strip().split()
 
+    # Get source URL from environment variable
+    source_url = os.environ.get("SOURCE_URL", "")
+
     if not new_files:
         print("No new files to process.")
         return
 
     print(f"Processing {len(new_files)} new HTML files.")
+    if source_url:
+        print(f"Using source URL: {source_url}")
 
     # Path to the index.html file
     index_path = "docs/index.html"
@@ -91,6 +96,14 @@ def main():
                 a = soup.new_tag("a", href=relative_path)
                 a.string = title
                 li.append(a)
+
+                # Add source link if available
+                if source_url:
+                    li.append(" [")
+                    source_link = soup.new_tag("a", href=source_url)
+                    source_link.string = "source"
+                    li.append(source_link)
+                    li.append("]")
 
                 # Add the new item to the list
                 list_element.append(li)
@@ -172,7 +185,14 @@ def main():
                 if relative_path.startswith("docs/"):
                     relative_path = relative_path[5:]
 
-                html_content += f'        <li><a href="{html.escape(relative_path)}">{html.escape(title)}</a></li>\n'
+                entry = f'        <li><a href="{html.escape(relative_path)}">{html.escape(title)}</a>'
+
+                # Add source link if available
+                if source_url:
+                    entry += f' [<a href="{html.escape(source_url)}">source</a>]'
+
+                entry += "</li>\n"
+                html_content += entry
 
             # Close the HTML
             html_content += """    </ul>

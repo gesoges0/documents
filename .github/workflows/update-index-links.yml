@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install beautifulsoup4
       
-      - name: Find New HTML Files
+      - name: Find New HTML Files and Source URLs
         id: find_files
         run: |
           # Get list of added HTML files from the last commit
@@ -44,8 +44,17 @@ jobs:
             exit 0
           fi
           
-          # Store the list of new files
+          # Extract URL from the commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+          
+          # Try to extract a URL from the commit message using regex
+          SOURCE_URL=$(echo "$COMMIT_MSG" | grep -Eo 'https?://[^ ]+' | head -1)
+          echo "Extracted source URL: $SOURCE_URL"
+          
+          # Store the list of new files and source URL
           echo "NEW_FILES=$NEW_FILES" >> $GITHUB_ENV
+          echo "SOURCE_URL=$SOURCE_URL" >> $GITHUB_ENV
           echo "::set-output name=found_files::true"
       
       - name: Create Branch
