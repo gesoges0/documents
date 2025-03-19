@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dbtとGitブランチング戦略</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yomogi&family=Zen+Kurenaido&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Zen Kurenaido', sans-serif;
+      background-color: #fcfcfc;
+      line-height: 1.4;
+      color: #334155;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      border-bottom: 3px solid #F2C53D;
+      padding-bottom: 15px;
+    }
+    
+    .title {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(45deg, #593C47, #F24405);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      position: relative;
+      padding-bottom: 5px;
+    }
+    
+    .title::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, #F2E63D, #F25C05);
+      border-radius: 3px;
+    }
+    
+    .date {
+      font-family: 'Yomogi', cursive;
+      font-size: 16px;
+      color: #475569;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 25px;
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      position: relative;
+      backdrop-filter: blur(5px);
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    
+    .card:hover {
+      border-color: #F2C53D;
+      transform: translateY(-3px);
+      transition: all 0.3s ease;
+    }
+    
+    .section-title {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 18px;
+      color: #1e40af;
+      margin-bottom: 15px;
+      padding-bottom: 5px;
+      border-bottom: 2px dashed #F25C05;
+      position: relative;
+      padding-left: 30px;
+    }
+    
+    .section-title::before {
+      content: "✏️";
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    
+    .content {
+      font-size: 14px;
+    }
+    
+    .keyword {
+      font-weight: bold;
+      background: linear-gradient(transparent 60%, #F2E63D 40%);
+      padding: 0 3px;
+    }
+    
+    .note {
+      background-color: rgba(242, 230, 61, 0.2);
+      border-left: 4px solid #F2C53D;
+      padding: 10px;
+      margin: 15px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .bubble {
+      background-color: white;
+      border: 2px solid #593C47;
+      border-radius: 20px;
+      padding: 10px 15px;
+      margin: 10px 0;
+      position: relative;
+    }
+    
+    .bubble::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      left: 20px;
+      border-width: 10px 10px 0;
+      border-style: solid;
+      border-color: #593C47 transparent;
+    }
+    
+    .arrow {
+      text-align: center;
+      font-size: 24px;
+      margin: 15px 0;
+    }
+    
+    .icon {
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    
+    .flow {
+      display: flex;
+      align-items: center;
+      margin: 15px 0;
+    }
+    
+    .flow-item {
+      padding: 8px 12px;
+      background: #F2C53D;
+      border-radius: 5px;
+      margin-right: 10px;
+      position: relative;
+    }
+    
+    .flow-item::after {
+      content: "→";
+      position: absolute;
+      right: -15px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .flow-item:last-child::after {
+      content: "";
+    }
+    
+    .advantages {
+      list-style: none;
+    }
+    
+    .advantages li {
+      margin-bottom: 8px;
+      padding-left: 25px;
+      position: relative;
+    }
+    
+    .advantages li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #F25C05;
+      font-weight: bold;
+    }
+    
+    .disadvantages li::before {
+      content: "✗";
+      position: absolute;
+      left: 0;
+      color: #593C47;
+      font-weight: bold;
+    }
+    
+    .branch-diagram {
+      width: 100%;
+      margin: 15px 0;
+      text-align: center;
+    }
+    
+    .footer {
+      text-align: right;
+      margin-top: 30px;
+      font-size: 12px;
+      color: #475569;
+      border-top: 1px solid #F2C53D;
+      padding-top: 10px;
+    }
+    
+    .hand-drawn {
+      border: 3px solid #593C47;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 15px 0;
+      transform: rotate(-0.5deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 class="title">dbtとGitブランチング戦略のベストプラクティス</h1>
+      <div class="date">2025年3月19日 <br> 出典: dbt Labs</div>
+    </header>
+    
+    <div class="grid">
+      <!-- 最初のカラム -->
+      <div>
+        <div class="card">
+          <h2 class="section-title">GitとdbtのIntegration</h2>
+          <div class="content">
+            <p><span class="keyword">dbt</span>プロジェクトは<span class="keyword">Git</span>リポジトリとして扱われるため、ソフトウェア開発と同じように<span class="keyword">ブランチング戦略</span>が重要です。</p>
+            
+            <div class="bubble">
+              dbtはデータ変換をコードとして管理し、Gitと連携することでバージョン管理とコラボレーションを実現します。
+            </div>
+            
+            <div class="note">
+              <p>📝 <strong>注意点</strong>: dbtプロジェクトの特徴を理解することがブランチング戦略の第一歩です</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h2 class="section-title">dbtプロジェクトの特徴</h2>
+          <div class="content">
+            <ul class="advantages">
+              <li><span class="keyword">SQLベース</span>: モデル定義はSQLファイル</li>
+              <li><span class="keyword">宣言型</span>: 「何を」作るかを定義</li>
+              <li><span class="keyword">依存関係管理</span>: モデル間の関係を管理</li>
+              <li><span class="keyword">テスト統合</span>: データ品質テストを内蔵</li>
+              <li><span class="keyword">ドキュメント生成</span>: 自動的にドキュメントを作成</li>
+            </ul>
+            
+            <div class="hand-drawn">
+              dbtプロジェクトは<span class="keyword">データ品質</span>と<span class="keyword">再現性</span>を重視したデータパイプラインの構築を支援します！
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 中央カラム -->
+      <div>
+        <div class="card">
+          <h2 class="section-title">一般的なGitブランチ戦略</h2>
+          <div class="content">
+            <div class="branch-diagram">
+              <svg width="100%" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- main/master branch -->
+                <path d="M 50,30 L 250,30" stroke="#593C47" stroke-width="3" fill="none" />
+                <text x="20" y="30" fill="#593C47" font-family="Yomogi">main</text>
+                
+                <!-- develop branch -->
+                <path d="M 50,70 L 250,70" stroke="#F2C53D" stroke-width="3" fill="none" />
+                <path d="M 70,30 Q 80,50 70,70" stroke="#F2C53D" stroke-width="2" fill="none" stroke-dasharray="5,3" />
+                <text x="20" y="70" fill="#F2C53D" font-family="Yomogi">develop</text>
+                
+                <!-- feature branches -->
+                <path d="M 100,70 Q 110,90 100,110" stroke="#F25C05" stroke-width="2" fill="none" stroke-dasharray="5,3" />
+                <path d="M 100,110 L 180,110" stroke="#F25C05" stroke-width="3" fill="none" />
+                <path d="M 180,110 Q 190,90 180,70" stroke="#F25C05" stroke-width="2" fill="none" stroke-dasharray="5,3" />
+                <text x="20" y="110" fill="#F25C05" font-family="Yomogi">feature</text>
+                
+                <!-- release branch -->
+                <path d="M 130,70 Q 140,50 130,30" stroke="#F24405" stroke-width="2" fill="none" stroke-dasharray="5,3" />
+                <text x="115" y="50" fill="#F24405" font-family="Yomogi" font-size="12">release</text>
+                
+                <!-- hotfix branch -->
+                <path d="M 200,30 Q 210,90 200,150" stroke="#593C47" stroke-width="2" fill="none" stroke-dasharray="5,3" />
+                <path d="M 200,150 L 250,150" stroke="#593C47" stroke-width="3" fill="none" />
+                <text x="20" y="150" fill="#593C47" font-family="Yomogi">hotfix</text>
+              </svg>
+            </div>
+            
+            <ul class="advantages">
+              <li><span class="keyword">Git Flow</span>: 複雑だが体系的</li>
+              <li><span class="keyword">GitHub Flow</span>: シンプルで継続的デプロイ向き</li>
+              <li><span class="keyword">Trunk Based</span>: mainブランチ中心の開発</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h2 class="section-title">dbtに最適なブランチング戦略</h2>
+          <div class="content">
+            <p>dbtプロジェクトには<span class="keyword">単純なブランチモデル</span>が適していることが多いです。</p>
+            
+            <div class="flow">
+              <div class="flow-item">feature</div>
+              <div class="flow-item">main</div>
+              <div class="flow-item">production</div>
+            </div>
+            
+            <div class="note">
+              <p>💡 <strong>ポイント</strong>: チームサイズや更新頻度に応じて適切な戦略を選びましょう</p>
+            </div>
+            
+            <div class="bubble">
+              dbtでは<span class="keyword">環境分離</span>が重要です。開発環境と本番環境を明確に分けましょう！
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 右カラム -->
+      <div>
+        <div class="card">
+          <h2 class="section-title">dbt独自の考慮点</h2>
+          <div class="content">
+            <ul class="advantages">
+              <li><span class="keyword">スキーマ管理</span>: 環境ごとに分離したスキーマ</li>
+              <li><span class="keyword">dbt Cloud連携</span>: CI/CDとの統合</li>
+              <li><span class="keyword">カスタムマクロ</span>: 環境変数の活用</li>
+            </ul>
+            
+            <div class="hand-drawn">
+              <p>dbt Cloudでは<span class="keyword">環境</span>という概念で開発/本番を分離します！</p>
+              <p>各環境は異なるターゲットスキーマを持ちます。</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h2 class="section-title">実践的なブランチ戦略例</h2>
+          <div class="content">
+            <h3 style="font-size: 16px; color: #F25C05; margin-bottom: 10px;">小規模チーム向け</h3>
+            <div class="flow">
+              <div class="flow-item">feature</div>
+              <div class="flow-item">main</div>
+            </div>
+            <p>シンプルな<span class="keyword">GitHub Flow</span>スタイル</p>
+            
+            <h3 style="font-size: 16px; color: #F25C05; margin-top: 20px; margin-bottom: 10px;">大規模チーム向け</h3>
+            <div class="flow">
+              <div class="flow-item">feature</div>
+              <div class="flow-item">develop</div>
+              <div class="flow-item">main</div>
+            </div>
+            <p>安定性重視の<span class="keyword">Git Flow</span>ライト版</p>
+            
+            <div class="note">
+              <p>🔑 <strong>成功の鍵</strong>: PRレビュー、自動テスト、明確なマージプロセスの確立</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h2 class="section-title">まとめ</h2>
+          <div class="content">
+            <div class="bubble">
+              最適なdbtブランチング戦略は<span class="keyword">チームの規模</span>と<span class="keyword">更新頻度</span>によって異なります。
+            </div>
+            
+            <ul class="advantages">
+              <li><span class="keyword">環境分離</span>を徹底する</li>
+              <li><span class="keyword">自動テスト</span>でデータ品質を確保</li>
+              <li><span class="keyword">シンプル</span>に始めて徐々に進化させる</li>
+              <li><span class="keyword">dbt独自の特性</span>を活かす</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      出典: <a href="https://docs.getdbt.com/blog/git-branching-strategies-with-dbt" target="_blank">Git branching strategies with dbt - dbt Labs</a> | グラフィックレコーディング風インフォグラフィック
+    </div>
+  </div>
+</body>
+</html>
