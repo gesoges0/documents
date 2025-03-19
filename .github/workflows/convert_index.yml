@@ -38,13 +38,17 @@ jobs:
             echo "::set-output name=changes::true"
           fi
 
+      - name: Get timestamp
+        id: timestamp
+        run: echo "datetime=$(date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
+
       - name: Create Pull Request
         if: steps.check_changes.outputs.changes == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'Update index.html from index.yaml'
-          branch: update-index-html
+          branch: update-index-html-${{ steps.timestamp.outputs.datetime }}
           delete-branch: true
           title: 'Update index.html from index.yaml'
           body: |
