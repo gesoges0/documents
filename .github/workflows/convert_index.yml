@@ -1,9 +1,7 @@
 name: Convert Index
 
 on:
-  push:
-    paths:
-      - 'docs/index.yaml'
+  workflow_dispatch:
 
 jobs:
   convert:
