@@ -13,7 +13,4 @@ index:
     items:
       - name: spotify-data-platform
         source: https://engineering.atspotify.com/2024/05/data-platform-explained-part-ii/
-  - dir: dbt
-    items:
-      - name: branching-strategies
-        source: https://docs.getdbt.com/blog/git-branching-strategies-with-dbt
+  
