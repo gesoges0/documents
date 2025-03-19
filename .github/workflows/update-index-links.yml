@@ -1,0 +1,85 @@
+name: Update Index Links
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**/*.html'
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for comparing changes
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install beautifulsoup4
+      
+      - name: Find New HTML Files
+        id: find_files
+        run: |
+          # Get list of added HTML files from the last commit
+          NEW_FILES=$(git diff --name-status HEAD^ HEAD | grep '^A' | grep -E '^A\s+docs/.+/.+\.html$' | awk '{print $2}' | tr '\n' ' ')
+          echo "New HTML files: $NEW_FILES"
+          
+          # Only proceed if we found matching files
+          if [ -z "$NEW_FILES" ]; then
+            echo "No new HTML files matching the pattern found."
+            echo "::set-output name=found_files::false"
+            exit 0
+          fi
+          
+          # Store the list of new files
+          echo "NEW_FILES=$NEW_FILES" >> $GITHUB_ENV
+          echo "::set-output name=found_files::true"
+      
+      - name: Create Branch
+        if: steps.find_files.outputs.found_files == 'true'
+        run: |
+          BRANCH_NAME="update-index-$(date +%Y%m%d%H%M%S)"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git checkout -b $BRANCH_NAME
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      
+      - name: Update Index HTML
+        if: steps.find_files.outputs.found_files == 'true'
+        run: |
+          # Run the update script
+          python .github/scripts/update_docs_index.py
+      
+      - name: Commit Changes
+        if: steps.find_files.outputs.found_files == 'true'
+        run: |
+          git add docs/index.html
+          git commit -m "Update docs/index.html with links to new content"
+      
+      - name: Push Changes
+        if: steps.find_files.outputs.found_files == 'true'
+        run: |
+          git push origin $BRANCH_NAME
+      
+      - name: Create Pull Request
+        if: steps.find_files.outputs.found_files == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --title "Update index with links to new content" \
+                       --body "This PR adds links to newly added HTML files in the index." \
+                       --base main \
+                       --head $BRANCH_NAME
