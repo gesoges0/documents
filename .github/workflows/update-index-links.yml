@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write  # Added this permission
     
     steps:
       - name: Checkout Repository
@@ -85,10 +86,11 @@ jobs:
       
       - name: Create Pull Request
         if: steps.find_files.outputs.found_files == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr create --title "Update index with links to new content" \
-                       --body "This PR adds links to newly added HTML files in the index." \
-                       --base main \
-                       --head $BRANCH_NAME
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update docs/index.html with links to new content"
+          title: "Update index with links to new content"
+          body: "This PR adds links to newly added HTML files in the index."
+          branch: ${{ env.BRANCH_NAME }}
+          base: main
