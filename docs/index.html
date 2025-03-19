@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>index</title>
-    <style>
-        body {
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   index
+  </title>
+  <style>
+   body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
@@ -49,35 +51,103 @@
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
         }
-    </style>
-</head>
-<body>
-    <h1>index</h1>
-    
-    <div class="tree">
-        <ul>
-            <li>
-                <span class="folder">tech-blog-netflix</span>
-                <ul>
-                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-engineering-part2.html">netflix-analytics-engineering-part2</a> (<a href="https://netflixtechblog.com/part-2-a-survey-of-analytics-engineering-work-at-netflix-4f1f53b4ab0f">source</a>)</span></li>
-                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-engineering.html">netflix-analytics-engineering (<a href="https://netflixtechblog.com/part-1-a-survey-of-analytics-engineering-work-at-netflix-d761cfd551ee">source</a>)</a></span></li>
-                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-graphic-recording.html">netflix-analytics-graphic-recording</a> (<a href="https://netflixtechblog.com/part-3-a-survey-of-analytics-engineering-work-at-netflix-e67f0aa82183">source</a>)</span></li>
-                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-maestro-infographic.html">netflix-maestro-infographic</a> (<a href="https://netflixtechblog.com/incremental-processing-using-netflix-maestro-and-apache-iceberg-b8ba072ddeeb">source</a>)</span></li>
-                </ul>
-            </li>
-        </ul>
-        <ul>
-            <li>
-                <span class="folder">tech-blog-spotify</span>
-                <ul>
-                    <li><span class="file"><a href="https://gesoges0.github.io/documents/tech-blog-spotify/spotify-data-platform.html">spotify-data-platform</a> (<a href="https://engineering.atspotify.com/2024/05/data-platform-explained-part-ii/">source</a>)</span></li>
-                </ul>
-            </li>
-        </ul>
-    </div>
-
-    <script>
-        // フォルダのクリックでサブフォルダの表示/非表示を切り替える
+  </style>
+ </head>
+ <body>
+  <h1>
+   index
+  </h1>
+  <div class="tree">
+   <ul>
+                <li>
+     <span class="folder">
+      tech-blog-netflix
+     </span>
+     <ul>
+                  <li>
+       <span class="file">
+        <a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-engineering-part2.html">
+         netflix-analytics-engineering-part2
+        </a>
+        (
+        <a href="https://netflixtechblog.com/part-2-a-survey-of-analytics-engineering-work-at-netflix-4f1f53b4ab0f">
+         source
+        </a>
+        )
+       </span>
+      </li>
+                  <li>
+       <span class="file">
+        <a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-engineering.html">
+         netflix-analytics-engineering (
+         <a href="https://netflixtechblog.com/part-1-a-survey-of-analytics-engineering-work-at-netflix-d761cfd551ee">
+          source
+         </a>
+         )
+        </a>
+       </span>
+      </li>
+                  <li>
+       <span class="file">
+        <a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-analytics-graphic-recording.html">
+         netflix-analytics-graphic-recording
+        </a>
+        (
+        <a href="https://netflixtechblog.com/part-3-a-survey-of-analytics-engineering-work-at-netflix-e67f0aa82183">
+         source
+        </a>
+        )
+       </span>
+      </li>
+                  <li>
+       <span class="file">
+        <a href="https://gesoges0.github.io/documents/tech-blog-netflix/netflix-maestro-infographic.html">
+         netflix-maestro-infographic
+        </a>
+        (
+        <a href="https://netflixtechblog.com/incremental-processing-using-netflix-maestro-and-apache-iceberg-b8ba072ddeeb">
+         source
+        </a>
+        )
+       </span>
+      </li>
+     </ul>
+    </li>
+                <li>
+     <a href="dbt/branching-strategies.html">
+      dbtとGitブランチング戦略
+     </a>
+     [
+     <a href="https://docs.getdbt.com/blog/git-branching-strategies-with-dbt">
+      source
+     </a>
+     ]
+    </li>
+   </ul>
+   <ul>
+                <li>
+     <span class="folder">
+      tech-blog-spotify
+     </span>
+     <ul>
+                  <li>
+       <span class="file">
+        <a href="https://gesoges0.github.io/documents/tech-blog-spotify/spotify-data-platform.html">
+         spotify-data-platform
+        </a>
+        (
+        <a href="https://engineering.atspotify.com/2024/05/data-platform-explained-part-ii/">
+         source
+        </a>
+        )
+       </span>
+      </li>
+     </ul>
+    </li>
+   </ul>
+  </div>
+  <script>
+   // フォルダのクリックでサブフォルダの表示/非表示を切り替える
         document.querySelectorAll('.folder').forEach(folder => {
             folder.addEventListener('click', () => {
                 const sublist = folder.nextElementSibling;
@@ -86,6 +156,6 @@
                 }
             });
         });
-    </script>
-</body>
+  </script>
+ </body>
 </html>
