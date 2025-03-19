@@ -46,7 +46,7 @@ jobs:
         if: steps.check_changes.outputs.changes == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           commit-message: 'Update index.html from index.yaml'
           branch: update-index-html-${{ steps.timestamp.outputs.datetime }}
           delete-branch: true
