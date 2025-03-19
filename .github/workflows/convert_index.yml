@@ -50,6 +50,7 @@ jobs:
           commit-message: 'Update index.html from index.yaml'
           branch: update-index-html-${{ steps.timestamp.outputs.datetime }}
           delete-branch: true
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           title: 'Update index.html from index.yaml'
           body: |
             This PR updates index.html based on the latest changes in index.yaml.
