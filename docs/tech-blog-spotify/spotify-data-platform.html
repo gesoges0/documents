@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotifyデータプラットフォーム説明</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yomogi&family=Zen+Kurenaido&display=swap');
+        
+        :root {
+            --fashion-1: #593C47;
+            --fashion-2: #F2E63D;
+            --fashion-3: #F2C53D;
+            --fashion-4: #F25C05;
+            --fashion-5: #F24405;
+            --text-main: #334155;
+            --text-heading: #1e40af;
+            --text-subheading: #475569;
+            --bg-light: #f8fafc;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Zen Kurenaido', sans-serif;
+            color: var(--text-main);
+            line-height: 1.4;
+            background-color: var(--bg-light);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--fashion-3);
+            position: relative;
+        }
+        
+        .header::after {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, var(--fashion-3), var(--fashion-4), var(--fashion-5));
+            border-radius: 2px;
+            z-index: 1;
+        }
+        
+        .header-title {
+            font-family: 'Kaisei Decol', serif;
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--fashion-1), var(--fashion-5));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+        }
+        
+        .header-title::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 5px;
+            bottom: -5px;
+            left: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,2.5 Q5,0 10,2.5 Q15,5 20,2.5 Q25,0 30,2.5 Q35,5 40,2.5 Q45,0 50,2.5 Q55,5 60,2.5 Q65,0 70,2.5 Q75,5 80,2.5 Q85,0 90,2.5 Q95,5 100,2.5' stroke='%23F25C05' fill='none' stroke-width='1'/%3E%3C/svg%3E");
+            background-repeat: repeat-x;
+        }
+        
+        .header-meta {
+            font-family: 'Yomogi', cursive;
+            color: var(--text-subheading);
+            font-size: 14px;
+            text-align: right;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .column {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(89, 60, 71, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--fashion-2), var(--fashion-3));
+        }
+        
+        .section-title {
+            font-family: 'Kaisei Decol', serif;
+            font-size: 18px;
+            color: var(--text-heading);
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed var(--fashion-3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title::before {
+            content: "✦";
+            color: var(--fashion-4);
+            font-size: 16px;
+        }
+        
+        .subsection {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .subsection-title {
+            font-family: 'Yomogi', cursive;
+            font-size: 16px;
+            color: var(--fashion-5);
+            margin-bottom: 8px;
+            position: relative;
+        }
+        
+        .subsection-title::before {
+            content: "→";
+            position: absolute;
+            left: -15px;
+            color: var(--fashion-4);
+        }
+        
+        .highlight {
+            background: linear-gradient(transparent 70%, var(--fashion-2) 70%);
+            padding: 0 2px;
+            font-weight: bold;
+        }
+        
+        .keyword {
+            font-family: 'Yomogi', cursive;
+            color: var(--fashion-1);
+            font-weight: bold;
+            border-bottom: 2px dashed var(--fashion-3);
+            padding: 0 2px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px dashed var(--fashion-3);
+        }
+        
+        .icon {
+            font-size: 18px;
+            margin-right: 5px;
+            color: var(--fashion-4);
+        }
+        
+        .arrow {
+            display: block;
+            margin: 15px auto;
+            text-align: center;
+            color: var(--fashion-4);
+            font-size: 20px;
+        }
+        
+        .data-flow {
+            position: relative;
+            margin: 20px 0;
+            padding: 10px;
+        }
+        
+        .data-flow::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 10%;
+            width: 80%;
+            height: 100%;
+            border-left: 2px dashed var(--fashion-3);
+            border-right: 2px dashed var(--fashion-3);
+            z-index: -1;
+        }
+        
+        .data-step {
+            background-color: white;
+            border: 1px solid var(--fashion-3);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            position: relative;
+            text-align: center;
+        }
+        
+        .data-step::before {
+            content: "↓";
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--fashion-4);
+            font-size: 16px;
+        }
+        
+        .data-step:first-child::before {
+            display: none;
+        }
+        
+        .note {
+            font-family: 'Yomogi', cursive;
+            font-size: 13px;
+            background-color: rgba(242, 230, 61, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid var(--fashion-3);
+            margin: 10px 0;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--fashion-3);
+            font-size: 12px;
+            color: var(--text-subheading);
+            text-align: center;
+        }
+        
+        .hand-drawn {
+            position: relative;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .hand-drawn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid var(--fashion-1);
+            border-radius: 12px;
+            box-shadow: 2px 2px 0 var(--fashion-3);
+            z-index: -1;
+        }
+        
+        .bubble {
+            position: relative;
+            background-color: white;
+            border: 1px solid var(--fashion-3);
+            border-radius: 20px;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        
+        .bubble::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            border-width: 0 10px 10px 10px;
+            border-style: solid;
+            border-color: transparent transparent var(--fashion-3) transparent;
+        }
+        
+        .bubble::after {
+            content: "";
+            position: absolute;
+            top: -8px;
+            left: 16px;
+            border-width: 0 9px 9px 9px;
+            border-style: solid;
+            border-color: transparent transparent white transparent;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .column {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="header-title">Spotifyデータプラットフォームの全貌</h1>
+            <div class="header-meta">
+                <div>2024年5月</div>
+                <div>出典: Spotify Engineering Blog</div>
+            </div>
+        </header>
+        
+        <div class="content">
+            <!-- 左カラム -->
+            <div class="column">
+                <div class="section">
+                    <h2 class="section-title">データプラットフォームとは</h2>
+                    <p>Spotifyでは、<span class="highlight">データプラットフォーム</span>は単なるデータウェアハウスではなく、<span class="keyword">データ収集</span>、<span class="keyword">処理</span>、<span class="keyword">分析</span>、<span class="keyword">活用</span>のための包括的なエコシステムです。</p>
+                    
+                    <div class="bubble">
+                        「データプラットフォームは、サービスがデータを収集し、処理し、分析し、活用するための場所」
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">主な目的</h3>
+                        <ul>
+                            <li>💡 意思決定の支援</li>
+                            <li>📊 データ駆動型機能の提供</li>
+                            <li>🔍 ユーザー行動の理解</li>
+                            <li>🚀 プロダクト改善の促進</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">データプラットフォームの歴史</h2>
+                    
+                    <div class="data-flow">
+                        <div class="data-step">
+                            2008年: 初期のデータベース
+                        </div>
+                        <div class="data-step">
+                            2011年: Hadoop導入
+                        </div>
+                        <div class="data-step">
+                            2013年: Luigi (ワークフローツール) 開発
+                        </div>
+                        <div class="data-step">
+                            2015年: Google Cloud移行開始
+                        </div>
+                        <div class="data-step">
+                            2020年: 現代的なデータメッシュアーキテクチャ
+                        </div>
+                    </div>
+                    
+                    <div class="note">
+                        Spotifyのデータプラットフォームは、常に進化し続けています。最新の取り組みは<span class="keyword">データメッシュ</span>アーキテクチャの採用です。
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 中央カラム -->
+            <div class="column">
+                <div class="section">
+                    <h2 class="section-title">データプラットフォームの構成要素</h2>
+                    
+                    <div class="hand-drawn">
+                        <div class="subsection">
+                            <h3 class="subsection-title">1. データ収集レイヤー</h3>
+                            <p><span class="icon">📱</span> モバイルアプリ、デスクトップアプリ、ウェブプレイヤーなどから<span class="keyword">イベントデータ</span>を収集</p>
+                            <p><span class="icon">🔄</span> リアルタイムおよびバッチ処理のデータパイプライン</p>
+                        </div>
+                        
+                        <div class="arrow">↓</div>
+                        
+                        <div class="subsection">
+                            <h3 class="subsection-title">2. データ処理レイヤー</h3>
+                            <p><span class="icon">⚙️</span> <span class="keyword">Apache Beam</span>を使用したストリーム処理</p>
+                            <p><span class="icon">📦</span> <span class="keyword">Scio</span> (Scala用Beam DSL) による処理</p>
+                            <p><span class="icon">🗃️</span> <span class="keyword">BigQuery</span>でのデータ保存と分析</p>
+                        </div>
+                        
+                        <div class="arrow">↓</div>
+                        
+                        <div class="subsection">
+                            <h3 class="subsection-title">3. データ消費レイヤー</h3>
+                            <p><span class="icon">📊</span> <span class="keyword">Looker</span>などのBIツール</p>
+                            <p><span class="icon">🤖</span> 機械学習モデルとレコメンデーション</p>
+                            <p><span class="icon">🔍</span> <span class="keyword">データ探索</span>とセルフサービス分析</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">データメッシュアーキテクチャ</h2>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">核心的な考え方</h3>
+                        <p>データを<span class="highlight">製品</span>として扱い、<span class="highlight">ドメイン所有者</span>がデータの品質と提供に責任を持つ</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h4><span class="icon">💡</span>データメッシュの4つの柱</h4>
+                        <ul>
+                            <li>ドメイン指向のデータ所有権</li>
+                            <li>セルフサービスのデータプラットフォーム</li>
+                            <li>製品としてのデータ</li>
+                            <li>フェデレーテッドガバナンス</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="note">
+                        Spotifyでは、<span class="keyword">データドメイン</span>はビジネスドメインに沿って構築され、各チームが自分たちのデータ製品を所有・管理しています。
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右カラム -->
+            <div class="column">
+                <div class="section">
+                    <h2 class="section-title">データ品質の確保</h2>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">データ契約と検証</h3>
+                        <p>Spotifyはデータ契約を通じて、<span class="keyword">データ品質</span>と<span class="keyword">信頼性</span>を確保しています。</p>
+                        
+                        <div class="card">
+                            <h4><span class="icon">🔍</span>データ契約の要素</h4>
+                            <ul>
+                                <li>スキーマ検証</li>
+                                <li>データ鮮度のモニタリング</li>
+                                <li>ボリュームと分布のチェック</li>
+                                <li>データリネージの追跡</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">データガバナンス</h3>
+                        <p>中央集権的なガバナンスと分散型の所有権を<span class="highlight">バランス</span>よく組み合わせています。</p>
+                        
+                        <div class="bubble">
+                            「標準化されたインターフェイスを持つ分散型の所有権」
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">データの民主化と活用</h2>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">データディスカバリー</h3>
+                        <p><span class="icon">🔎</span> <span class="keyword">データカタログ</span>を通じて、データセットの検索と理解を容易に</p>
+                        <p><span class="icon">📚</span> メタデータ管理とデータドキュメンテーション</p>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">データ活用事例</h3>
+                        <ul>
+                            <li>👥 ユーザーパーソナライゼーション</li>
+                            <li>🎵 音楽レコメンデーション</li>
+                            <li>📱 アプリケーション体験の最適化</li>
+                            <li>📊 アーティスト向けインサイト</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="note">
+                        Spotifyでは、<span class="keyword">データリテラシー</span>の向上とデータへのアクセス性を高めることが重要な課題です。
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">未来への展望</h2>
+                    
+                    <div class="subsection">
+                        <h3 class="subsection-title">今後の取り組み</h3>
+                        <p><span class="icon">🤖</span> <span class="keyword">AIと機械学習</span>の活用拡大</p>
+                        <p><span class="icon">⚡</span> リアルタイムデータ処理の強化</p>
+                        <p><span class="icon">🔒</span> データプライバシーとセキュリティの継続的な改善</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>出典: <a href="https://engineering.atspotify.com/2024/04/data-platform-explained/" target="_blank">Data Platform Explained</a> & <a href="https://engineering.atspotify.com/2024/05/data-platform-explained-part-ii/" target="_blank">Data Platform Explained Part II</a> - Spotify Engineering Blog</p>
+            <p>© 2024 グラフィックレコーディング風インフォグラフィック</p>
+        </footer>
+    </div>
+</body>
+</html>
