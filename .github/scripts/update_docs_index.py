@@ -108,18 +108,22 @@ def main():
                 # Add the new item to the list
                 list_element.append(li)
 
-            # Preserve indentation by using the pretty printer with the original indent
-            # First, detect the indentation used in the original file
-            indent = 4  # Default indentation
+            # Instead of using prettify with indent_width, we'll use a standard prettify
+            # and try to preserve indentation manually
+            html_output = soup.prettify()
+
+            # Detect indentation from original file
+            indent_size = 4  # Default
             indent_match = re.search(r"^\n*(\s+)<li>", content, re.MULTILINE)
             if indent_match:
                 indent_str = indent_match.group(1)
-                # Convert tabs to spaces if needed
-                indent_str = indent_str.replace("\t", "    ")
-                indent = len(indent_str)
+                indent_size = len(indent_str.replace("\t", "    "))
 
-            # Format the HTML with the detected indentation
-            html_output = soup.prettify(formatter="html", indent_width=indent)
+            # Try to adjust indentation to match the original file's style
+            # This is a simple approach that may not preserve all formatting perfectly
+            indent = " " * indent_size
+            # Add proper indentation for li elements that might be affected
+            html_output = re.sub(r"(\n\s*)<li>", r"\1" + indent + "<li>", html_output)
 
             # Write the updated content back to the file
             with open(index_path, "w", encoding="utf-8") as f:
