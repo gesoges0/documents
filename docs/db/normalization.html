@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    h2 {
+      color: #3498db;
+      margin-top: 40px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #3498db;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+      text-align: left;
+      padding: 12px;
+    }
+    td {
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .description {
+      background-color: #eaf2f8;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .arrow {
+      text-align: center;
+      font-size: 24px;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>リレーショナルデータベースの正規化</h1>
+  
+  <p class="description">正規化とは、データベース設計においてデータの冗長性を減らし、データの整合性を向上させるプロセスです。主に第1正規形(1NF)、第2正規形(2NF)、第3正規形(3NF)の3段階があります。</p>
+  
+  <h2>非正規形（正規化前のデータ）</h2>
+  <p>正規化前のデータには、繰り返しグループや冗長なデータが含まれています。</p>
+  
+  <table>
+    <tr>
+      <th>注文ID</th>
+      <th>顧客ID</th>
+      <th>顧客名</th>
+      <th>顧客住所</th>
+      <th>商品1ID</th>
+      <th>商品1名</th>
+      <th>商品1価格</th>
+      <th>商品1数量</th>
+      <th>商品2ID</th>
+      <th>商品2名</th>
+      <th>商品2価格</th>
+      <th>商品2数量</th>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>C101</td>
+      <td>田中太郎</td>
+      <td>東京都新宿区</td>
+      <td>P001</td>
+      <td>ノートPC</td>
+      <td>80000</td>
+      <td>1</td>
+      <td>P002</td>
+      <td>マウス</td>
+      <td>3000</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>C102</td>
+      <td>鈴木花子</td>
+      <td>大阪府大阪市</td>
+      <td>P003</td>
+      <td>キーボード</td>
+      <td>5000</td>
+      <td>1</td>
+      <td>P001</td>
+      <td>ノートPC</td>
+      <td>80000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1003</td>
+      <td>C101</td>
+      <td>田中太郎</td>
+      <td>東京都新宿区</td>
+      <td>P002</td>
+      <td>マウス</td>
+      <td>3000</td>
+      <td>1</td>
+      <td>null</td>
+      <td>null</td>
+      <td>null</td>
+      <td>null</td>
+    </tr>
+  </table>
+  
+  <div class="description">
+    <strong>問題点:</strong>
+    <ul>
+      <li>繰り返しグループがある（商品1、商品2...）</li>
+      <li>データの冗長性（田中太郎の情報が重複）</li>
+      <li>null値の多用</li>
+      <li>データ更新時の整合性問題（例: 田中太郎の住所変更時に複数箇所の更新が必要）</li>
+    </ul>
+  </div>
+  
+  <div class="arrow">↓</div>
+  
+  <h2>第1正規形 (1NF)</h2>
+  <p>第1正規形は、繰り返しグループを排除し、各セルが原子的（分割できない）値のみを持つようにします。</p>
+  
+  <table>
+    <tr>
+      <th>注文ID</th>
+      <th>顧客ID</th>
+      <th>顧客名</th>
+      <th>顧客住所</th>
+      <th>商品ID</th>
+      <th>商品名</th>
+      <th>価格</th>
+      <th>数量</th>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>C101</td>
+      <td>田中太郎</td>
+      <td>東京都新宿区</td>
+      <td>P001</td>
+      <td>ノートPC</td>
+      <td>80000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>C101</td>
+      <td>田中太郎</td>
+      <td>東京都新宿区</td>
+      <td>P002</td>
+      <td>マウス</td>
+      <td>3000</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>C102</td>
+      <td>鈴木花子</td>
+      <td>大阪府大阪市</td>
+      <td>P003</td>
+      <td>キーボード</td>
+      <td>5000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>C102</td>
+      <td>鈴木花子</td>
+      <td>大阪府大阪市</td>
+      <td>P001</td>
+      <td>ノートPC</td>
+      <td>80000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1003</td>
+      <td>C101</td>
+      <td>田中太郎</td>
+      <td>東京都新宿区</td>
+      <td>P002</td>
+      <td>マウス</td>
+      <td>3000</td>
+      <td>1</td>
+    </tr>
+  </table>
+  
+  <div class="description">
+    <strong>改善点:</strong>
+    <ul>
+      <li>繰り返しグループの排除</li>
+      <li>各セルは単一の値のみを持つ</li>
+    </ul>
+    <strong>残っている問題点:</strong>
+    <ul>
+      <li>まだデータの冗長性が存在（顧客情報、商品情報の重複）</li>
+    </ul>
+  </div>
+  
+  <div class="arrow">↓</div>
+  
+  <h2>第2正規形 (2NF)</h2>
+  <p>第2正規形は、第1正規形を満たし、かつ部分関数従属性を排除します。非キー属性がプライマリキー全体に完全関数従属している状態です。</p>
+  
+  <h3>注文ヘッダーテーブル</h3>
+  <table>
+    <tr>
+      <th>注文ID</th>
+      <th>顧客ID</th>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>C101</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>C102</td>
+    </tr>
+    <tr>
+      <td>1003</td>
+      <td>C101</td>
+    </tr>
+  </table>
+  
+  <h3>注文詳細テーブル</h3>
+  <table>
+    <tr>
+      <th>注文ID</th>
+      <th>商品ID</th>
+      <th>数量</th>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>P001</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>P002</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>P003</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>P001</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1003</td>
+      <td>P002</td>
+      <td>1</td>
+    </tr>
+  </table>
+  
+  <h3>顧客テーブル</h3>
+  <table>
+    <tr>
+      <th>顧客ID</th>
+      <th>顧客名</th>
+      <th>顧客住所</th>
+    </tr>
+    <tr>
+      <td>C101</td>
+      <td>田中太郎</td>
+      <td>東京都新宿区</td>
+    </tr>
+    <tr>
+      <td>C102</td>
+      <td>鈴木花子</td>
+      <td>大阪府大阪市</td>
+    </tr>
+  </table>
+  
+  <h3>商品テーブル</h3>
+  <table>
+    <tr>
+      <th>商品ID</th>
+      <th>商品名</th>
+      <th>価格</th>
+    </tr>
+    <tr>
+      <td>P001</td>
+      <td>ノートPC</td>
+      <td>80000</td>
+    </tr>
+    <tr>
+      <td>P002</td>
+      <td>マウス</td>
+      <td>3000</td>
+    </tr>
+    <tr>
+      <td>P003</td>
+      <td>キーボード</td>
+      <td>5000</td>
+    </tr>
+  </table>
+  
+  <div class="description">
+    <strong>改善点:</strong>
+    <ul>
+      <li>主キーに部分的に依存する属性を分離</li>
+      <li>顧客情報（顧客ID、顧客名、顧客住所）は顧客IDにのみ依存するため分離</li>
+      <li>商品情報（商品ID、商品名、価格）は商品IDにのみ依存するため分離</li>
+    </ul>
+    <strong>残っている問題点:</strong>
+    <ul>
+      <li>非キー属性間の従属関係がまだ存在（住所情報は顧客IDに直接関連しない）</li>
+    </ul>
+  </div>
+  
+  <div class="arrow">↓</div>
+  
+  <h2>第3正規形 (3NF)</h2>
+  <p>第3正規形は、第2正規形を満たし、かつ推移的関数従属性を排除します。非キー属性は、キーに直接依存し、他の非キー属性に依存しない状態です。</p>
+  
+  <h3>注文ヘッダーテーブル</h3>
+  <table>
+    <tr>
+      <th>注文ID</th>
+      <th>顧客ID</th>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>C101</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>C102</td>
+    </tr>
+    <tr>
+      <td>1003</td>
+      <td>C101</td>
+    </tr>
+  </table>
+  
+  <h3>注文詳細テーブル</h3>
+  <table>
+    <tr>
+      <th>注文ID</th>
+      <th>商品ID</th>
+      <th>数量</th>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>P001</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1001</td>
+      <td>P002</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>P003</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1002</td>
+      <td>P001</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>1003</td>
+      <td>P002</td>
+      <td>1</td>
+    </tr>
+  </table>
+  
+  <h3>顧客テーブル</h3>
+  <table>
+    <tr>
+      <th>顧客ID</th>
+      <th>顧客名</th>
+      <th>住所ID</th>
+    </tr>
+    <tr>
+      <td>C101</td>
+      <td>田中太郎</td>
+      <td>A001</td>
+    </tr>
+    <tr>
+      <td>C102</td>
+      <td>鈴木花子</td>
+      <td>A002</td>
+    </tr>
+  </table>
+  
+  <h3>住所テーブル</h3>
+  <table>
+    <tr>
+      <th>住所ID</th>
+      <th>住所詳細</th>
+    </tr>
+    <tr>
+      <td>A001</td>
+      <td>東京都新宿区</td>
+    </tr>
+    <tr>
+      <td>A002</td>
+      <td>大阪府大阪市</td>
+    </tr>
+  </table>
+  
+  <h3>商品テーブル</h3>
+  <table>
+    <tr>
+      <th>商品ID</th>
+      <th>商品名</th>
+      <th>価格</th>
+    </tr>
+    <tr>
+      <td>P001</td>
+      <td>ノートPC</td>
+      <td>80000</td>
+    </tr>
+    <tr>
+      <td>P002</td>
+      <td>マウス</td>
+      <td>3000</td>
+    </tr>
+    <tr>
+      <td>P003</td>
+      <td>キーボード</td>
+      <td>5000</td>
+    </tr>
+  </table>
+  
+  <div class="description">
+    <strong>改善点:</strong>
+    <ul>
+      <li>推移的関数従属性の排除</li>
+      <li>「住所詳細」は「住所ID」に依存し、「住所ID」は「顧客ID」に依存するため、住所情報を分離</li>
+    </ul>
+    <strong>正規化の主なメリット:</strong>
+    <ul>
+      <li>データの冗長性の削減</li>
+      <li>データの整合性の向上（例: 住所変更時に1箇所の更新で済む）</li>
+      <li>データベース構造の柔軟性の向上</li>
+      <li>効率的なデータ操作と保守</li>
+    </ul>
+  </div>
+</body>
+</html>
