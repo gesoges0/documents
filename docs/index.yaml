@@ -17,3 +17,7 @@ index:
     items:
       - name: branching-strategies
         source: https://docs.getdbt.com/blog/git-branching-strategies-with-dbt
+  - dir: db
+    items:
+      - name: normalization
+        source: None
