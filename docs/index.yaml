@@ -21,3 +21,7 @@ index:
     items:
       - name: normalization
         source: null
+  - dir: analysis
+    items:
+        - name: cohort-analysis
+          source: null
