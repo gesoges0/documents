@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <!-- 背景 -->
+  <rect width="800" height="800" fill="#f8f9fa" />
+  
+  <!-- タイトル -->
+  <rect x="0" y="0" width="800" height="80" fill="#4472C4" />
+  <text x="400" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#fff">コホート分析：完全ガイド</text>
+  
+  <!-- 定義 -->
+  <rect x="50" y="100" width="700" height="70" fill="#EEF4FF" stroke="#AAC9FF" stroke-width="1" rx="5" ry="5" />
+  <text x="70" y="125" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">コホート分析とは：</text>
+  <text x="70" y="150" font-family="Arial, sans-serif" font-size="14" fill="#333">特定の期間に同じ特性や経験を共有するグループ（コホート）を追跡し、時間経過による行動変化を分析する手法。</text>
+  <text x="70" y="170" font-family="Arial, sans-serif" font-size="14" fill="#333">例：特定月に新規登録したユーザーの継続率、特定施策後のユーザー行動変化など</text>
+  
+  <!-- 月の説明 -->
+  <rect x="50" y="190" width="700" height="70" fill="#EEF4FF" stroke="#AAC9FF" stroke-width="1" rx="5" ry="5" />
+  <text x="70" y="215" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">「月0, 1, 2, 3, 4」の意味：</text>
+  <text x="70" y="240" font-family="Arial, sans-serif" font-size="14" fill="#333">・「月0」：顧客が最初に獲得された月（基準月）</text>
+  <text x="70" y="260" font-family="Arial, sans-serif" font-size="14" fill="#333">・「月1, 2, 3, 4」：基準月からの経過月数（例：月3は獲得から3ヶ月後）</text>
+  
+  <!-- コホート表 -->
+  <rect x="50" y="280" width="700" height="250" fill="#fff" stroke="#ddd" stroke-width="1" />
+  
+  <!-- 表のヘッダー -->
+  <rect x="50" y="280" width="150" height="50" fill="#4472C4" stroke="#ddd" stroke-width="1" />
+  <text x="125" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff" font-weight="bold">獲得月</text>
+  
+  <rect x="200" y="280" width="110" height="50" fill="#4472C4" stroke="#ddd" stroke-width="1" />
+  <text x="255" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff" font-weight="bold">月0</text>
+  
+  <rect x="310" y="280" width="110" height="50" fill="#4472C4" stroke="#ddd" stroke-width="1" />
+  <text x="365" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff" font-weight="bold">月1</text>
+  
+  <rect x="420" y="280" width="110" height="50" fill="#4472C4" stroke="#ddd" stroke-width="1" />
+  <text x="475" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff" font-weight="bold">月2</text>
+  
+  <rect x="530" y="280" width="110" height="50" fill="#4472C4" stroke="#ddd" stroke-width="1" />
+  <text x="585" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff" font-weight="bold">月3</text>
+  
+  <rect x="640" y="280" width="110" height="50" fill="#4472C4" stroke="#ddd" stroke-width="1" />
+  <text x="695" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff" font-weight="bold">月4</text>
+  
+  <!-- 1行目データ -->
+  <rect x="50" y="330" width="150" height="50" fill="#E6F0FF" stroke="#ddd" stroke-width="1" />
+  <text x="125" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">1月コホート</text>
+  
+  <rect x="200" y="330" width="110" height="50" fill="#0066CC" stroke="#ddd" stroke-width="1" />
+  <text x="255" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">100%</text>
+  
+  <rect x="310" y="330" width="110" height="50" fill="#2A80D7" stroke="#ddd" stroke-width="1" />
+  <text x="365" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">85%</text>
+  
+  <rect x="420" y="330" width="110" height="50" fill="#5599E2" stroke="#ddd" stroke-width="1" />
+  <text x="475" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">76%</text>
+  
+  <rect x="530" y="330" width="110" height="50" fill="#7FB3EC" stroke="#ddd" stroke-width="1" />
+  <text x="585" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">68%</text>
+  
+  <rect x="640" y="330" width="110" height="50" fill="#A9CCF6" stroke="#ddd" stroke-width="1" />
+  <text x="695" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">62%</text>
+  
+  <!-- 2行目データ -->
+  <rect x="50" y="380" width="150" height="50" fill="#E6F0FF" stroke="#ddd" stroke-width="1" />
+  <text x="125" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">2月コホート</text>
+  
+  <rect x="200" y="380" width="110" height="50" fill="#0066CC" stroke="#ddd" stroke-width="1" />
+  <text x="255" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">100%</text>
+  
+  <rect x="310" y="380" width="110" height="50" fill="#2A80D7" stroke="#ddd" stroke-width="1" />
+  <text x="365" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">82%</text>
+  
+  <rect x="420" y="380" width="110" height="50" fill="#5599E2" stroke="#ddd" stroke-width="1" />
+  <text x="475" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">74%</text>
+  
+  <rect x="530" y="380" width="110" height="50" fill="#7FB3EC" stroke="#ddd" stroke-width="1" />
+  <text x="585" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">65%</text>
+  
+  <rect x="640" y="380" width="110" height="50" fill="#A9CCF6" stroke="#ddd" stroke-width="1" />
+  <text x="695" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">59%</text>
+  
+  <!-- 3行目データ -->
+  <rect x="50" y="430" width="150" height="50" fill="#E6F0FF" stroke="#ddd" stroke-width="1" />
+  <text x="125" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">3月コホート</text>
+  
+  <rect x="200" y="430" width="110" height="50" fill="#0066CC" stroke="#ddd" stroke-width="1" />
+  <text x="255" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">100%</text>
+  
+  <rect x="310" y="430" width="110" height="50" fill="#2A80D7" stroke="#ddd" stroke-width="1" />
+  <text x="365" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">88%</text>
+  
+  <rect x="420" y="430" width="110" height="50" fill="#5599E2" stroke="#ddd" stroke-width="1" />
+  <text x="475" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">79%</text>
+  
+  <rect x="530" y="430" width="110" height="50" fill="#7FB3EC" stroke="#ddd" stroke-width="1" />
+  <text x="585" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">71%</text>
+  
+  <rect x="640" y="430" width="110" height="50" fill="#A9CCF6" stroke="#ddd" stroke-width="1" />
+  <text x="695" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">64%</text>
+  
+  <!-- 4行目データ -->
+  <rect x="50" y="480" width="150" height="50" fill="#E6F0FF" stroke="#ddd" stroke-width="1" />
+  <text x="125" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">4月コホート</text>
+  
+  <rect x="200" y="480" width="110" height="50" fill="#0066CC" stroke="#ddd" stroke-width="1" />
+  <text x="255" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">100%</text>
+  
+  <rect x="310" y="480" width="110" height="50" fill="#2A80D7" stroke="#ddd" stroke-width="1" />
+  <text x="365" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">90%</text>
+  
+  <rect x="420" y="480" width="110" height="50" fill="#5599E2" stroke="#ddd" stroke-width="1" />
+  <text x="475" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">81%</text>
+  
+  <rect x="530" y="480" width="110" height="50" fill="#7FB3EC" stroke="#ddd" stroke-width="1" />
+  <text x="585" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#fff">73%</text>
+  
+  <rect x="640" y="480" width="110" height="50" fill="#A9CCF6" stroke="#ddd" stroke-width="1" />
+  <text x="695" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">67%</text>
+  
+  <!-- 表の読み方 -->
+  <rect x="50" y="550" width="340" height="80" fill="#EEF4FF" stroke="#AAC9FF" stroke-width="1" rx="5" ry="5" />
+  <text x="70" y="575" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">図の読み方：</text>
+  <text x="70" y="600" font-family="Arial, sans-serif" font-size="14" fill="#333">・セルの数値は各コホートの顧客継続率を表す</text>
+  <text x="70" y="620" font-family="Arial, sans-serif" font-size="14" fill="#333">・色の濃さは継続率の高さを視覚的に表現</text>
+  
+  <!-- 具体例 -->
+  <rect x="410" y="550" width="340" height="80" fill="#FFEDED" stroke="#FFAAAA" stroke-width="1" rx="5" ry="5" />
+  <text x="430" y="575" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">具体例：</text>
+  <text x="430" y="600" font-family="Arial, sans-serif" font-size="14" fill="#333">・3月コホートの月3値71%は、3月に獲得した</text>
+  <text x="430" y="620" font-family="Arial, sans-serif" font-size="14" fill="#333">　顧客の71%が3ヶ月後も継続していることを示す</text>
+  
+  <!-- コホート分析のメリット -->
+  <rect x="50" y="650" width="700" height="130" fill="#E5F6E5" stroke="#AAD9AA" stroke-width="1" rx="5" ry="5" />
+  <text x="70" y="675" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">コホート分析の主なメリット：</text>
+  
+  <!-- メリット左側 -->
+  <circle cx="70" cy="700" r="4" fill="#0066CC" />
+  <text x="85" y="705" font-family="Arial, sans-serif" font-size="14" fill="#333">顧客の継続的な利用パターンを把握できる</text>
+  
+  <circle cx="70" cy="725" r="4" fill="#0066CC" />
+  <text x="85" y="730" font-family="Arial, sans-serif" font-size="14" fill="#333">時間経過による顧客離脱の傾向を識別できる</text>
+  
+  <circle cx="70" cy="750" r="4" fill="#0066CC" />
+  <text x="85" y="755" font-family="Arial, sans-serif" font-size="14" fill="#333">施策の効果をコホートごとに分析できる</text>
+  
+  <!-- メリット右側 -->
+  <circle cx="400" cy="700" r="4" fill="#0066CC" />
+  <text x="415" y="705" font-family="Arial, sans-serif" font-size="14" fill="#333">異なる顧客グループの行動を比較できる</text>
+  
+  <circle cx="400" cy="725" r="4" fill="#0066CC" />
+  <text x="415" y="730" font-family="Arial, sans-serif" font-size="14" fill="#333">LTV（顧客生涯価値）の予測に役立つ</text>
+  
+  <circle cx="400" cy="750" r="4" fill="#0066CC" />
+  <text x="415" y="755" font-family="Arial, sans-serif" font-size="14" fill="#333">プロダクト改善の効果測定に有効</text>
+  
+  <!-- 活用例 -->
+  <text x="400" y="790" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333" font-style="italic">※活用例：SaaSビジネス、Eコマース、モバイルアプリ、サブスクリプションサービスなど</text>
+</svg>
