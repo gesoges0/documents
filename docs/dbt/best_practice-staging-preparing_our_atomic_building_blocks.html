@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dBT ステージング層：原子的な構成要素の準備</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yomogi:wght@400&family=Zen+Kurenaido:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Yomogi', cursive;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #593C47 0%, #F2C53D 100%);
+            padding: 30px 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-60px, -60px) rotate(360deg); }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        h1 {
+            font-family: 'Zen Kurenaido', cursive;
+            font-size: 32px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+        
+        .date-source {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #F2C53D, #F25C05, #F24405);
+        }
+        
+        .section-title {
+            font-family: 'Zen Kurenaido', cursive;
+            font-size: 18px;
+            color: #1e40af;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon {
+            font-size: 24px;
+            background: linear-gradient(135deg, #F2C53D, #F25C05);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hand-drawn-box {
+            border: 2px solid #F25C05;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFFFFF 100%);
+            position: relative;
+            transform: rotate(-0.5deg);
+        }
+        
+        .hand-drawn-box::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border: 2px dashed #F2C53D;
+            border-radius: 15px;
+            transform: rotate(1deg);
+            z-index: -1;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, rgba(242, 196, 61, 0.3) 0%, rgba(242, 196, 61, 0.1) 100%);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #593C47;
+            border-bottom: 3px solid #F2C53D;
+        }
+        
+        .code-snippet {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .do-dont {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .do {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+        }
+        
+        .dont {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+        }
+        
+        .arrow {
+            font-size: 20px;
+            color: #F25C05;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .flow-item {
+            background: linear-gradient(135deg, #F2E63D, #F2C53D);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #593C47;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: rotate(-1deg);
+            margin: 5px;
+        }
+        
+        .flow-item:nth-child(even) {
+            transform: rotate(1deg);
+        }
+        
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(89, 60, 71, 0.1) 0%, rgba(242, 230, 61, 0.1) 100%);
+            border: 2px solid #593C47;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .analogy-box::before {
+            content: '💡';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-size: 20px;
+        }
+        
+        .file-tree {
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+        
+        .key-point {
+            background: linear-gradient(135deg, #F24405, #F25C05);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            transform: rotate(-0.5deg);
+            box-shadow: 0 4px 15px rgba(242, 68, 5, 0.3);
+        }
+        
+        footer {
+            background: #593C47;
+            color: white;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🧱 dBT ステージング層</h1>
+                    <p>原子的な構成要素の準備</p>
+                </div>
+                <div class="date-source">
+                    <div>📅 2025年6月11日</div>
+                    <div>📖 出典: dbt Documentation</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- 左カラム：概念とアナロジー -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">⚛️</span>
+                    基本概念とアナロジー
+                </h3>
+                
+                <div class="analogy-box">
+                    <h4>🧪 化学のメタファー</h4>
+                    <p><strong>ソースシステムデータ</strong> = エネルギーとクォークのスープ</p>
+                    <div class="arrow">⬇️</div>
+                    <p><strong>ステージング層</strong> = 原子への凝縮・精製</p>
+                    <div class="arrow">⬇️</div>
+                    <p><strong>より複雑な構造</strong> = 分子、タンパク質、細胞</p>
+                </div>
+                
+                <div class="key-point">
+                    <strong>🎯 ステージング層の役割</strong><br>
+                    複雑で有用なモデルを構築するための個別コンポーネントをプロジェクトに取り込む基盤
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>📂 ファイル構造の重要性</h4>
+                    <ul>
+                        <li>データフローの反映</li>
+                        <li>ナレッジグラフのインターフェース</li>
+                        <li>dbtセレクター構文での利用</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 中央カラム：構造とファイル命名 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">📁</span>
+                    構造とファイル命名規則
+                </h3>
+                
+                <div class="file-tree">
+models/staging<br>
+├── jaffle_shop<br>
+│ ├── _jaffle_shop__docs.md<br>
+│ ├── _jaffle_shop__models.yml<br>
+│ ├── _jaffle_shop__sources.yml<br>
+│ ├── base/<br>
+│ │ ├── base_jaffle_shop__customers.sql<br>
+│ │ └── base_jaffle_shop__deleted_customers.sql<br>
+│ ├── stg_jaffle_shop__customers.sql<br>
+│ └── stg_jaffle_shop__orders.sql<br>
+└── stripe<br>
+    ├── _stripe__models.yml<br>
+    ├── _stripe__sources.yml<br>
+    └── stg_stripe__payments.sql
+                </div>
+                
+                <h4 class="highlight">📋 サブディレクトリのグループ化</h4>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>ソースシステム基準</strong> - 共通の読み込み方法と属性</span>
+                </div>
+                
+                <div class="dont">
+                    <span>❌</span>
+                    <span><strong>ローダー基準</strong> - 大規模プロジェクトには広すぎ</span>
+                </div>
+                
+                <div class="dont">
+                    <span>❌</span>
+                    <span><strong>ビジネスグループ基準</strong> - 重複と競合する定義を招く</span>
+                </div>
+                
+                <h4 class="highlight">🏷️ ファイル命名パターン</h4>
+                
+                <div class="hand-drawn-box">
+                    <div class="do">
+                        <span>✅</span>
+                        <code>stg_[source]__[entity]s.sql</code>
+                    </div>
+                    <p>二重アンダースコアで視覚的に区別</p>
+                    
+                    <div class="do">
+                        <span>✅</span>
+                        <span><strong>複数形</strong> - SQLが自然な文章のように読める</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右カラム：モデルと変換 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🔧</span>
+                    モデルと変換パターン
+                </h3>
+                
+                <h4 class="highlight">✨ 標準的な変換タイプ</h4>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>リネーム</strong> - カラム名の統一</span>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>型キャスト</strong> - データ型の変換</span>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>基本計算</strong> - セントからドルへの変換など</span>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>カテゴリ化</strong> - 条件ロジックでのグループ化</span>
+                </div>
+                
+                <h4 class="highlight">🚫 避けるべき変換</h4>
+                
+                <div class="dont">
+                    <span>❌</span>
+                    <span><strong>結合</strong> - 重複した計算と混乱する関係を作る</span>
+                </div>
+                
+                <div class="dont">
+                    <span>❌</span>
+                    <span><strong>集約</strong> - データの粒度を変更し、ソースデータへのアクセスを失う</span>
+                </div>
+                
+                <div class="code-snippet">
+-- stg_stripe__payments.sql
+with
+source as (
+  select * from {{ source('stripe','payment') }}
+),
+renamed as (
+  select
+    -- ids
+    id as payment_id,
+    orderid as order_id,
+    -- strings  
+    paymentmethod as payment_method,
+    case
+      when payment_method in ('stripe', 'paypal') 
+      then 'credit'
+      else 'cash'
+    end as payment_type,
+    -- numerics
+    amount / 100.0 as amount,
+    -- timestamps
+    created::timestamp_ltz as created_at
+  from source
+)
+select * from renamed
+                </div>
+                
+                <div class="key-point">
+                    <strong>🎯 DRY原則</strong><br>
+                    「常に必要」な変換は可能な限り上流で実行し、重複したコードを避ける
+                </div>
+            </div>
+            
+            <!-- 下段：マテリアライゼーションとベースモデル -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">👁️</span>
+                    マテリアライゼーション
+                </h3>
+                
+                <div class="hand-drawn-box">
+                    <h4>📊 ビューとしてマテリアライズ</h4>
+                    <p>ステージングモデルは<span class="highlight">ビュー</span>として構成</p>
+                </div>
+                
+                <h4>💡 理由：</h4>
+                <div class="flow-diagram">
+                    <div class="flow-item">最新データ</div>
+                    <span class="arrow">→</span>
+                    <div class="flow-item">容量節約</div>
+                    <span class="arrow">→</span>
+                    <div class="flow-item">構成要素</div>
+                </div>
+                
+                <div class="code-snippet">
+# dbt_project.yml
+models:
+  jaffle_shop:
+    staging:
+      +materialized: view
+                </div>
+                
+                <div class="key-point">
+                    <strong>1:1の関係</strong><br>
+                    各ソーステーブルに対して単一のステージングモデル
+                </div>
+            </div>
+            
+            <!-- 中央下段：ベースモデル -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🏗️</span>
+                    ベースモデルと特殊ケース
+                </h3>
+                
+                <div class="analogy-box">
+                    <h4>🔧 ベースモデルが必要な場合</h4>
+                    <p>クリーンでDRYなステージング層を維持するために結合が必要な場合</p>
+                </div>
+                
+                <h4 class="highlight">💼 一般的な使用例</h4>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>削除テーブルの結合</strong> - 削除レコードのマーク付け</span>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>同一構造ソースのユニオン</strong> - 複数地域のShopifyデータなど</span>
+                </div>
+                
+                <div class="flow-diagram">
+                    <div class="flow-item">base_customers</div>
+                    <span class="arrow">+</span>
+                    <div class="flow-item">base_deleted</div>
+                    <span class="arrow">→</span>
+                    <div class="flow-item">stg_customers</div>
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🤖 自動化ツール</h4>
+                    <p><strong>Codegen</strong>を使用してステージングテーブル生成を自動化</p>
+                    <ul>
+                        <li>ソースYAMLの生成</li>
+                        <li>ステージングモデルのボイラープレート</li>
+                        <li>効率的なプロジェクト開発</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 右下段：開発プロセス -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🔄</span>
+                    開発プロセスとベストプラクティス
+                </h3>
+                
+                <div class="key-point">
+                    <strong>📈 開発フロー</strong><br>
+                    DAGの順序に従うが、開発は非線形的に進む
+                </div>
+                
+                <div class="flow-diagram">
+                    <div class="flow-item">スプレッドシート<br>モックアップ</div>
+                    <div class="arrow">↓</div>
+                    <div class="flow-item">SQL<br>ロジック作成</div>
+                    <div class="flow-item">必要テーブル<br>特定</div>
+                    <div class="arrow">↓</div>
+                    <div class="flow-item">ステージング<br>作成</div>
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🎯 ユーティリティフォルダ</h4>
+                    <p><code>models/utilities</code>ディレクトリ</p>
+                    <ul>
+                        <li>マクロから生成される汎用モデル</li>
+                        <li>モデリング支援ツール</li>
+                        <li>日付スパインなど</li>
+                    </ul>
+                </div>
+                
+                <div class="analogy-box">
+                    <h4>🧪 リファクタリングと最適化</h4>
+                    <p>機能するモデルができたら、ロジックを分割し、部品を上流の中間モデルに移動</p>
+                    <div class="arrow">⬇️</div>
+                    <p><strong>結果：</strong> クリーンで読みやすいモデル、明確なDAGストーリー、包括的なテスト</p>
+                </div>
+                
+                <div class="key-point">
+                    <strong>🎪 単一の真実のソース</strong><br>
+                    すべての人が同じ原子のセットで構築する
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>📚 出典: dbt Documentation - Best Practices: How We Structure Our dbt Projects</p>
+            <p>🌐 URL: https://docs.getdbt.com/best-practices/how-we-structure/2-staging</p>
+        </footer>
+    </div>
+</body>
+</html>
