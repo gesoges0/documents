@@ -17,6 +17,16 @@ index:
     items:
       - name: branching-strategies
         source: https://docs.getdbt.com/blog/git-branching-strategies-with-dbt
+      - name: best_practice-how_we_structure_our_dbt_projects
+        source: https://docs.getdbt.com/best-practices/how-we-structure/1-guide-overview
+      - name: best_practice-staging-preparing_our_atomic_building_blocks
+        source: https://docs.getdbt.com/best-practices/how-we-structure/2-staging
+      - name: best_practice-intermediate-purpose_built_transformation_steps
+        source: https://docs.getdbt.com/best-practices/how-we-structure/3-intermediate
+      - name: best_practice-marts-Business_defined_entities
+        source: https://docs.getdbt.com/best-practices/how-we-structure/4-marts
+      - name: best_practice-the_rest_of_the_project
+        source: https://docs.getdbt.com/best-practices/how-we-structure/5-the-rest-of-the-project
   - dir: db
     items:
       - name: normalization
