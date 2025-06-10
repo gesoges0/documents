@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dBT マート層：ビジネス定義エンティティ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yomogi:wght@400&family=Zen+Kurenaido:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Yomogi', cursive;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #593C47 0%, #F2E63D 30%, #F2C53D 60%, #F25C05 100%);
+            padding: 30px 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M25 5L35 15L25 25L15 15z M25 25L35 35L25 45L15 35z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            animation: float 30s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-50px, -50px) rotate(360deg); }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        h1 {
+            font-family: 'Zen Kurenaido', cursive;
+            font-size: 32px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+        
+        .date-source {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #F2E63D, #F2C53D, #F25C05, #F24405);
+        }
+        
+        .section-title {
+            font-family: 'Zen Kurenaido', cursive;
+            font-size: 18px;
+            color: #1e40af;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon {
+            font-size: 24px;
+            background: linear-gradient(135deg, #F2C53D, #F25C05);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hand-drawn-box {
+            border: 2px solid #F25C05;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFFFFF 100%);
+            position: relative;
+            transform: rotate(-0.5deg);
+        }
+        
+        .hand-drawn-box::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border: 2px dashed #F2C53D;
+            border-radius: 15px;
+            transform: rotate(1deg);
+            z-index: -1;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, rgba(242, 196, 61, 0.3) 0%, rgba(242, 196, 61, 0.1) 100%);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #593C47;
+            border-bottom: 3px solid #F2C53D;
+        }
+        
+        .code-snippet {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            overflow-x: auto;
+            border-left: 4px solid #F25C05;
+        }
+        
+        .do-dont {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .do {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+        }
+        
+        .dont {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+        }
+        
+        .arrow {
+            font-size: 20px;
+            color: #F25C05;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .flow-item {
+            background: linear-gradient(135deg, #F2E63D, #F2C53D);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #593C47;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: rotate(-1deg);
+            margin: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .flow-item:nth-child(even) {
+            transform: rotate(1deg);
+            background: linear-gradient(135deg, #F25C05, #F24405);
+            color: white;
+        }
+        
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(89, 60, 71, 0.1) 0%, rgba(242, 230, 61, 0.1) 100%);
+            border: 2px solid #593C47;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .analogy-box::before {
+            content: '🏛️';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-size: 20px;
+        }
+        
+        .file-tree {
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+        
+        .key-point {
+            background: linear-gradient(135deg, #F24405, #F25C05);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            transform: rotate(-0.5deg);
+            box-shadow: 0 4px 15px rgba(242, 68, 5, 0.3);
+        }
+        
+        .cell-structure {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .atom {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #F2E63D, #F2C53D);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #593C47;
+            font-size: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .molecule {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #F25C05, #F24405);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+            box-shadow: 0 4px 15px rgba(242, 68, 5, 0.3);
+        }
+        
+        .cell {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #593C47, #F24405);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 6px 20px rgba(89, 60, 71, 0.4);
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .entity-box {
+            background: linear-gradient(135deg, rgba(242, 196, 61, 0.2), rgba(242, 91, 5, 0.1));
+            border: 2px solid #F2C53D;
+            border-radius: 15px;
+            padding: 10px;
+            margin: 10px 5px;
+            display: inline-block;
+            font-weight: bold;
+            color: #593C47;
+            transform: rotate(-1deg);
+        }
+        
+        .entity-box:nth-child(even) {
+            transform: rotate(1deg);
+        }
+        
+        .materialization-ladder {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .materialization-step {
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 2px solid #64748b;
+            font-weight: bold;
+            color: #1e293b;
+            position: relative;
+        }
+        
+        .materialization-step.active {
+            background: linear-gradient(135deg, #F2C53D, #F25C05);
+            color: white;
+            border-color: #F24405;
+        }
+        
+        .denorm-visual {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border: 2px dashed #F25C05;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .wide-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 5px;
+            margin: 15px 0;
+        }
+        
+        .table-cell {
+            background: #F2E63D;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 10px;
+            text-align: center;
+            color: #593C47;
+            font-weight: bold;
+        }
+        
+        .semantic-warning {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+            border: 2px solid #ef4444;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .semantic-warning::before {
+            content: '⚠️';
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        
+        footer {
+            background: #593C47;
+            color: white;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .cell-structure {
+                flex-direction: column;
+            }
+            
+            .wide-table {
+                grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🏛️ dBT マート層</h1>
+                    <p>ビジネス定義エンティティ</p>
+                </div>
+                <div class="date-source">
+                    <div>📅 2025年6月11日</div>
+                    <div>📖 出典: dbt Documentation</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- 左カラム：概念と構造 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🧬</span>
+                    細胞の形成：完全なエンティティ
+                </h3>
+                
+                <div class="analogy-box">
+                    <h4>🔬 原子→分子→細胞</h4>
+                    <div class="cell-structure">
+                        <div class="atom">S</div>
+                        <div class="atom">S</div>
+                        <span class="arrow">+</span>
+                        <div class="molecule">I</div>
+                        <div class="molecule">I</div>
+                        <span class="arrow">→</span>
+                        <div class="cell">MART<br>細胞</div>
+                    </div>
+                    <p><strong>アイデンティティと目的</strong>を持った完全な細胞を形成</p>
+                </div>
+                
+                <div class="key-point">
+                    <strong>🎯 マート層の特徴</strong><br>
+                    特定のエンティティや概念を固有の粒度で表現する「エンティティ層」
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🏷️ エンティティの例</h4>
+                    <div class="entity-box">注文</div>
+                    <div class="entity-box">顧客</div>
+                    <div class="entity-box">地域</div>
+                    <div class="entity-box">クリック</div>
+                    <div class="entity-box">決済</div>
+                    <p>各行は離散的なインスタンスを表現</p>
+                </div>
+                
+                <div class="semantic-warning">
+                    <strong>セマンティックレイヤー使用時</strong><br>
+                    正規化を維持してMetricFlowに柔軟性を提供
+                </div>
+                
+                <div class="analogy-box">
+                    <h4>💰 モダンデータウェアハウス</h4>
+                    <p><strong>ストレージ安価 × コンピュート高価</strong></p>
+                    <div class="arrow">⬇️</div>
+                    <p>非正規化によるパフォーマンス最適化</p>
+                </div>
+            </div>
+            
+            <!-- 中央カラム：ファイル構造と命名 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">📁</span>
+                    ファイル構造と命名規則
+                </h3>
+                
+                <div class="file-tree">
+models/marts<br>
+├── finance<br>
+│ ├── _finance__models.yml<br>
+│ ├── orders.sql<br>
+│ └── payments.sql<br>
+└── marketing<br>
+    ├── _marketing__models.yml<br>
+    └── customers.sql
+                </div>
+                
+                <h4 class="highlight">📋 グループ化の原則</h4>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>部門・関心領域別</strong> - ビジネス概念でグループ化</span>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>エンティティ名</strong> - 平易な英語で概念の粒度を表現</span>
+                </div>
+                
+                <div class="dont">
+                    <span>❌</span>
+                    <span><strong>チーム別の同一概念</strong> - `finance_orders`と`marketing_orders`は避ける</span>
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🎯 命名の例外</h4>
+                    <p><strong>OK:</strong> `tax_revenue` と `revenue`</p>
+                    <p><strong>NG:</strong> `finance_revenue` と `marketing_revenue`</p>
+                    <p>明確に<strong>異なる概念</strong>として設計する場合のみ</p>
+                </div>
+                
+                <div class="key-point">
+                    <strong>⚠️ 早期最適化の回避</strong><br>
+                    マート10個未満でサブフォルダは不要
+                </div>
+            </div>
+            
+            <!-- 右カラム：モデル実装 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🔧</span>
+                    モデル実装パターン
+                </h3>
+                
+                <div class="code-snippet">
+-- orders.sql
+with
+orders as (
+  select * from {{ ref('stg_jaffle_shop__orders' )}}
+),
+order_payments as (
+  select * from {{ ref('int_payments_pivoted_to_orders') }}
+),
+orders_and_order_payments_joined as (
+  select
+    orders.order_id,
+    orders.customer_id,
+    orders.order_date,
+    coalesce(order_payments.total_amount, 0) as amount,
+    coalesce(order_payments.gift_card_amount, 0) 
+      as gift_card_amount
+  from orders
+  left join order_payments 
+    on orders.order_id = order_payments.order_id
+)
+select * from orders_and_payments_joined
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🧠 結合の複雑さ管理</h4>
+                    <p><strong>4-5個以上の概念</strong>を結合する場合は中間モデルを検討</p>
+                    <div class="flow-diagram">
+                        <div class="flow-item">3概念の<br>中間A</div>
+                        <span class="arrow">+</span>
+                        <div class="flow-item">3概念の<br>中間B</div>
+                        <span class="arrow">→</span>
+                        <div class="flow-item">読みやすい<br>マート</div>
+                    </div>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>他マートの活用</strong> - 計算済みリソースの再利用でコスト削減</span>
+                </div>
+                
+                <div class="key-point">
+                    <strong>⚖️ バランスの考慮</strong><br>
+                    結合モデル数 × ロジック複雑さ = 総複雑度
+                </div>
+            </div>
+            
+            <!-- 下段：マテリアライゼーション -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">💾</span>
+                    マテリアライゼーション戦略
+                </h3>
+                
+                <div class="materialization-ladder">
+                    <div class="materialization-step">ビュー（開始点）</div>
+                    <div class="arrow">⬇️ 遅くなったら</div>
+                    <div class="materialization-step active">テーブル</div>
+                    <div class="arrow">⬇️ 構築が遅くなったら</div>
+                    <div class="materialization-step">インクリメンタル</div>
+                </div>
+                
+                <div class="key-point">
+                    <strong>📈 段階的アプローチ</strong><br>
+                    シンプルから始めて、必要に応じて複雑さを追加
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🛠️ 開発時のトラブルシューティング</h4>
+                    <p>エラーの原因特定が困難な場合：</p>
+                    <ul>
+                        <li>一時的にチェーン全体をテーブル化</li>
+                        <li>実際のエラー発生箇所を特定</li>
+                        <li>祖先モデルのエラーを発見</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 中央下段：非正規化 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">📊</span>
+                    非正規化とワイド化
+                </h3>
+                
+                <div class="denorm-visual">
+                    <h4>🏗️ モダンデータスタック</h4>
+                    <p><strong>ストレージ安価</strong> → <strong>コンピュート高価</strong></p>
+                    <div class="arrow">⬇️</div>
+                    <p>非正規化による最適化</p>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>ワイドで非正規化</strong> - 概念に関するすべてを一箇所に</span>
+                </div>
+                
+                <div class="wide-table">
+                    <div class="table-cell">ID</div>
+                    <div class="table-cell">顧客</div>
+                    <div class="table-cell">注文</div>
+                    <div class="table-cell">決済</div>
+                    <div class="table-cell">地域</div>
+                    <div class="table-cell">商品</div>
+                    <div class="table-cell">...</div>
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>💰 コスト効率</h4>
+                    <p>複数箇所でのデータ構築 > 繰り返し結合</p>
+                    <ul>
+                        <li>ダッシュボード高速化</li>
+                        <li>再計算コスト削減</li>
+                        <li>エンドユーザー体験向上</li>
+                    </ul>
+                </div>
+                
+                <div class="key-point">
+                    <strong>🎯 粒度の維持</strong><br>
+                    他エンティティを含んでも、コアエンティティの粒度は保持
+                </div>
+            </div>
+            
+            <!-- 右下段：ベストプラクティス -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🎯</span>
+                    ベストプラクティス
+                </h3>
+                
+                <div class="key-point">
+                    <strong>🎪 エンドユーザー向け設計</strong><br>
+                    マート層は実際の利用を想定した最初の層
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>📏 粒度の境界</h4>
+                    <p><strong>マート:</strong> `orders` (注文レベル)</p>
+                    <div class="arrow">vs</div>
+                    <p><strong>メトリクス:</strong> `user_orders_per_day` (集約レベル)</p>
+                </div>
+                
+                <div class="analogy-box">
+                    <h4>🔄 DAGの柔軟性</h4>
+                    <p>マート層では狭いDAGの制約が緩和</p>
+                    <ul>
+                        <li>異なる粒度間での情報受け渡し</li>
+                        <li>計算済みリソースの再利用</li>
+                        <li>循環依存の回避</li>
+                    </ul>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>有用なデータの包含</strong> - 粒度レベルでの包括的な情報</span>
+                </div>
+                
+                <div class="dont">
+                    <span>❌</span>
+                    <span><strong>過度な結合</strong> - 読みにくさとパフォーマンス劣化</span>
+                </div>
+                
+                <div class="semantic-warning">
+                    <strong>セマンティックレイヤー利用時</strong><br>
+                    正規化アプローチを採用し、MetricFlowの柔軟性を最大化
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🎨 設計哲学</h4>
+                    <p>アイデンティティと目的を持った<strong>完全なエンティティ</strong>の作成</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>📚 出典: dbt Documentation - Best Practices: How We Structure Our dbt Projects</p>
+            <p>🌐 URL: https://docs.getdbt.com/best-practices/how-we-structure/4-marts</p>
+        </footer>
+    </div>
+</body>
+</html>
