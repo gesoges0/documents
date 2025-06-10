@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dBT プロジェクト全体構造：残りの要素</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yomogi:wght@400&family=Zen+Kurenaido:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Yomogi', cursive;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #593C47 0%, #F2E63D 25%, #F2C53D 50%, #F25C05 75%, #F24405 100%);
+            padding: 30px 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M30 0v60M0 30h60M15 15h30v30H15z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            animation: float 35s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-60px, -60px) rotate(360deg); }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        h1 {
+            font-family: 'Zen Kurenaido', cursive;
+            font-size: 32px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+        
+        .date-source {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #F2E63D, #F2C53D, #F25C05, #F24405);
+        }
+        
+        .section-title {
+            font-family: 'Zen Kurenaido', cursive;
+            font-size: 18px;
+            color: #1e40af;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon {
+            font-size: 24px;
+            background: linear-gradient(135deg, #F2C53D, #F25C05);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hand-drawn-box {
+            border: 2px solid #F25C05;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFFFFF 100%);
+            position: relative;
+            transform: rotate(-0.5deg);
+        }
+        
+        .hand-drawn-box::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border: 2px dashed #F2C53D;
+            border-radius: 15px;
+            transform: rotate(1deg);
+            z-index: -1;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, rgba(242, 196, 61, 0.3) 0%, rgba(242, 196, 61, 0.1) 100%);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #593C47;
+            border-bottom: 3px solid #F2C53D;
+        }
+        
+        .code-snippet {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            overflow-x: auto;
+            border-left: 4px solid #F25C05;
+        }
+        
+        .do-dont {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .do {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+        }
+        
+        .dont {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+        }
+        
+        .warning {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .arrow {
+            font-size: 20px;
+            color: #F25C05;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .flow-item {
+            background: linear-gradient(135deg, #F2E63D, #F2C53D);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #593C47;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: rotate(-1deg);
+            margin: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .flow-item:nth-child(even) {
+            transform: rotate(1deg);
+            background: linear-gradient(135deg, #F25C05, #F24405);
+            color: white;
+        }
+        
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(89, 60, 71, 0.1) 0%, rgba(242, 230, 61, 0.1) 100%);
+            border: 2px solid #593C47;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .analogy-box::before {
+            content: '🏗️';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-size: 20px;
+        }
+        
+        .file-tree {
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            margin: 15px 0;
+            line-height: 1.4;
+        }
+        
+        .key-point {
+            background: linear-gradient(135deg, #F24405, #F25C05);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            transform: rotate(-0.5deg);
+            box-shadow: 0 4px 15px rgba(242, 68, 5, 0.3);
+        }
+        
+        .folder-structure {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .folder-item {
+            background: linear-gradient(135deg, #F2E63D, #F2C53D);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            color: #593C47;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: rotate(-1deg);
+        }
+        
+        .folder-item:nth-child(even) {
+            transform: rotate(1deg);
+            background: linear-gradient(135deg, #F25C05, #F24405);
+            color: white;
+        }
+        
+        .folder-item .folder-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .yaml-balance {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 15px;
+            padding: 20px;
+        }
+        
+        .balance-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .balance-scale {
+            font-size: 30px;
+            color: #F25C05;
+        }
+        
+        .cascade-visual {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            border: 2px dashed #F25C05;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .cascade-level {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cascade-level:nth-child(1) { margin-left: 0; }
+        .cascade-level:nth-child(2) { margin-left: 20px; }
+        .cascade-level:nth-child(3) { margin-left: 40px; }
+        
+        .mesh-visual {
+            background: linear-gradient(135deg, rgba(242, 196, 61, 0.2), rgba(242, 91, 5, 0.1));
+            border: 2px solid #F2C53D;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .mesh-nodes {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        
+        .mesh-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #F25C05, #F24405);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 4px 15px rgba(242, 68, 5, 0.3);
+        }
+        
+        .mesh-connection {
+            width: 30px;
+            height: 2px;
+            background: #F25C05;
+        }
+        
+        .splitting-criteria {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .criteria-card {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .criteria-good {
+            background: rgba(34, 197, 94, 0.1);
+            border: 2px solid #22c55e;
+            color: #166534;
+        }
+        
+        .criteria-bad {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+        
+        footer {
+            background: #593C47;
+            color: white;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .folder-structure {
+                grid-template-columns: 1fr;
+            }
+            
+            .yaml-balance {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .mesh-nodes {
+                flex-direction: column;
+            }
+            
+            .mesh-connection {
+                width: 2px;
+                height: 20px;
+            }
+            
+            .splitting-criteria {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🏗️ dBT プロジェクト全体</h1>
+                    <p>残りの構造要素</p>
+                </div>
+                <div class="date-source">
+                    <div>📅 2025年6月11日</div>
+                    <div>📖 出典: dbt Documentation</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- 左カラム：YAML設定 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">📝</span>
+                    YAML設定戦略
+                </h3>
+                
+                <div class="yaml-balance">
+                    <div class="balance-item">
+                        <strong>一元化</strong><br>
+                        <small>設定の統合</small>
+                    </div>
+                    <div class="balance-scale">⚖️</div>
+                    <div class="balance-item">
+                        <strong>ファイルサイズ</strong><br>
+                        <small>発見しやすさ</small>
+                    </div>
+                </div>
+                
+                <h4 class="highlight">📁 推奨パターン</h4>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>フォルダ毎の設定</strong> - `_[directory]__models.yml`</span>
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🎯 命名規則の利点</h4>
+                    <ul>
+                        <li><strong>先頭アンダースコア</strong> - フォルダトップにソート</li>
+                        <li><strong>ディレクトリ名含む</strong> - ファジーファインドを高速化</li>
+                        <li><strong>辞書名ベース</strong> - 内容が明確</li>
+                    </ul>
+                </div>
+                
+                <div class="dont">
+                    <span>❌</span>
+                    <span><strong>プロジェクト単位</strong> - 巨大ファイルで発見困難</span>
+                </div>
+                
+                <div class="warning">
+                    <span>⚠️</span>
+                    <span><strong>モデル単位</strong> - 開発効率が低下する場合あり</span>
+                </div>
+                
+                <div class="key-point">
+                    <strong>🎪 カスケード設定</strong><br>
+                    `dbt_project.yml`でディレクトリレベルのデフォルトを定義
+                </div>
+                
+                <div class="code-snippet">
+-- dbt_project.yml
+models:
+  jaffle_shop:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: ephemeral
+    marts:
+      +materialized: table
+      finance:
+        +schema: finance
+      marketing:
+        +schema: marketing
+                </div>
+            </div>
+            
+            <!-- 中央カラム：その他フォルダ -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">📂</span>
+                    その他フォルダの活用
+                </h3>
+                
+                <div class="folder-structure">
+                    <div class="folder-item">
+                        <span class="folder-icon">🌱</span>
+                        seeds
+                    </div>
+                    <div class="folder-item">
+                        <span class="folder-icon">🔍</span>
+                        analyses
+                    </div>
+                    <div class="folder-item">
+                        <span class="folder-icon">🧪</span>
+                        tests
+                    </div>
+                    <div class="folder-item">
+                        <span class="folder-icon">📸</span>
+                        snapshots
+                    </div>
+                    <div class="folder-item">
+                        <span class="folder-icon">⚙️</span>
+                        macros
+                    </div>
+                </div>
+                
+                <h4 class="highlight">🌱 Seeds</h4>
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>ルックアップテーブル</strong> - 郵便番号→州、UTM→キャンペーン</span>
+                </div>
+                <div class="dont">
+                    <span>❌</span>
+                    <span><strong>ソースデータ読み込み</strong> - 適切なELツールを使用</span>
+                </div>
+                
+                <h4 class="highlight">🔍 Analyses</h4>
+                <div class="hand-drawn-box">
+                    <p><strong>監査クエリの保存</strong></p>
+                    <ul>
+                        <li>Jinjaを使用したバージョン管理</li>
+                        <li>audit helperパッケージ活用</li>
+                        <li>システム移行時の差異発見</li>
+                    </ul>
+                </div>
+                
+                <h4 class="highlight">🧪 Tests</h4>
+                <div class="analogy-box">
+                    <h4>単体テスト vs 統合テスト</h4>
+                    <p><strong>Generic tests</strong> = 単体テスト</p>
+                    <p><strong>Singular tests</strong> = 統合テスト</p>
+                    <p>複数モデルの相互作用テストに最適</p>
+                </div>
+            </div>
+            
+            <!-- 右カラム：プロジェクト分割 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🔗</span>
+                    プロジェクト分割戦略
+                </h3>
+                
+                <div class="mesh-visual">
+                    <h4>🌐 Mesh アプローチ</h4>
+                    <div class="mesh-nodes">
+                        <div class="mesh-node">プロジェクト<br>A</div>
+                        <div class="mesh-connection"></div>
+                        <div class="mesh-node">プロジェクト<br>B</div>
+                        <div class="mesh-connection"></div>
+                        <div class="mesh-node">プロジェクト<br>C</div>
+                    </div>
+                    <p>モノリシックプロジェクトから接続された小規模プロジェクトへ</p>
+                </div>
+                
+                <h4 class="highlight">✅ 分割の適切な理由</h4>
+                
+                <div class="splitting-criteria">
+                    <div class="criteria-card criteria-good">
+                        <strong>ビジネスグループ</strong><br>
+                        部門別のデータ製品所有
+                    </div>
+                    <div class="criteria-card criteria-good">
+                        <strong>データガバナンス</strong><br>
+                        セキュリティ・アクセス制御
+                    </div>
+                    <div class="criteria-card criteria-good">
+                        <strong>プロジェクトサイズ</strong><br>
+                        1000s モデルでの開発体験
+                    </div>
+                    <div class="criteria-card criteria-bad">
+                        <strong>ML vs レポート</strong><br>
+                        単一真実ソースを阻害
+                    </div>
+                </div>
+                
+                <div class="key-point">
+                    <strong>🎯 基本方針</strong><br>
+                    ほとんどのチーム、特に初心者はMeshの使用を推奨
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🔒 ガバナンス例</h4>
+                    <p><strong>医療会社のケース</strong></p>
+                    <ul>
+                        <li>PII生データアクセス限定チーム</li>
+                        <li>ステージングモデルを独立プロジェクト</li>
+                        <li>プライベートパッケージとしてインポート</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 下段：設定カスケード -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">⬇️</span>
+                    設定カスケードの活用
+                </h3>
+                
+                <div class="cascade-visual">
+                    <h4>🎯 階層的設定</h4>
+                    <div class="cascade-level">
+                        <strong>プロジェクトレベル:</strong> 全体デフォルト
+                    </div>
+                    <div class="cascade-level">
+                        <strong>ディレクトリレベル:</strong> フォルダ別設定
+                    </div>
+                    <div class="cascade-level">
+                        <strong>モデルレベル:</strong> 例外のみ
+                    </div>
+                </div>
+                
+                <div class="key-point">
+                    <strong>🏗️ DRY原則の実践</strong><br>
+                    フォルダ構造を活用して設定の重複を排除
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>🏷️ タグ vs フォルダ</h4>
+                    <p><strong>推奨:</strong> `dbt build --select marts.marketing`</p>
+                    <p><strong>非推奨:</strong> `dbt build --select tag:marketing`</p>
+                    <ul>
+                        <li>フォルダを主要セレクター</li>
+                        <li>タグは例外グループのみ</li>
+                        <li>開発者の記憶に依存しない</li>
+                    </ul>
+                </div>
+                
+                <div class="analogy-box">
+                    <h4>🎪 スコープ優先度</h4>
+                    <p>dbtのカスケード優先度を活用して、ベースライン動作を定義</p>
+                    <div class="flow-diagram">
+                        <div class="flow-item">スキーマ</div>
+                        <div class="flow-item">マテリアライゼーション</div>
+                        <div class="flow-item">バリエーション</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 中央下段：マクロとドキュメント -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">⚙️</span>
+                    マクロとドキュメント
+                </h3>
+                
+                <div class="hand-drawn-box">
+                    <h4>⚙️ Macros フォルダ</h4>
+                    <p><strong>目的:</strong> 繰り返し変換のDRY化</p>
+                    <ul>
+                        <li>共通ロジックの再利用</li>
+                        <li>保守性の向上</li>
+                        <li>一貫性の確保</li>
+                    </ul>
+                </div>
+                
+                <div class="key-point">
+                    <strong>📚 マクロドキュメント</strong><br>
+                    `_macros.yml`で目的と引数を文書化
+                </div>
+                
+                <div class="code-snippet">
+-- macros/cents_to_dollars.sql
+{% macro cents_to_dollars(column_name) %}
+  ({{ column_name }} / 100.0)::numeric(16,2)
+{% endmacro %}
+                </div>
+                
+                <div class="analogy-box">
+                    <h4>📸 Snapshots</h4>
+                    <p><strong>Type 2 SCD作成</strong></p>
+                    <p>Type 1（破壊的更新）データから履歴保持テーブルを生成</p>
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>📖 Documentation blocks</h4>
+                    <p>`_[directory]__docs.md`パターンに従い、フォルダ毎にドキュメントブロックを整理</p>
+                </div>
+            </div>
+            
+            <!-- 右下段：最終考慮事項 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🎯</span>
+                    最終考慮事項
+                </h3>
+                
+                <div class="key-point">
+                    <strong>🎪 一貫性が最重要</strong><br>
+                    特定の規約よりも一貫性を重視
+                </div>
+                
+                <div class="hand-drawn-box">
+                    <h4>📝 カスタマイズ指針</h4>
+                    <p>構造を変更する場合：</p>
+                    <ol>
+                        <li><strong>理由を深く考える</strong></li>
+                        <li><strong>チームに文書化</strong></li>
+                        <li><strong>規約からの逸脱を説明</strong></li>
+                    </ol>
+                </div>
+                
+                <div class="analogy-box">
+                    <h4>🔄 進化する文書</h4>
+                    <p>このガイドはリビングドキュメント</p>
+                    <ul>
+                        <li>dbtの進化と共に変化</li>
+                        <li>コミュニティからの貢献歓迎</li>
+                        <li>ディスカッションと改善</li>
+                    </ul>
+                </div>
+                
+                <div class="do">
+                    <span>✅</span>
+                    <span><strong>ガイドのフォーク</strong> - プロジェクトREADME・wikiに追加
