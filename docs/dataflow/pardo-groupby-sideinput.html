@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataflow 変換処理解説</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: #1a73e8;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .visual-demo {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #e0e0e0;
+        }
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .data-box {
+            background: white;
+            border: 2px solid #4285f4;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 120px;
+            text-align: center;
+        }
+        .data-box-input {
+            border-color: #34a853;
+            background: #e8f5e9;
+        }
+        .data-box-output {
+            border-color: #fbbc04;
+            background: #fff3e0;
+        }
+        .data-item {
+            background: #e8f0fe;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            border-left: 3px solid #1a73e8;
+        }
+        .arrow {
+            font-size: 32px;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        .transform-box {
+            background: #4285f4;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 150px;
+        }
+        .code-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .keyword {
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .string {
+            color: #c62828;
+        }
+        .comment {
+            color: #388e3c;
+        }
+        .number {
+            color: #f57c00;
+        }
+        .groupby-visual {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .before-group, .after-group {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .group-title {
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .group-item {
+            background: #e8f0fe;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .grouped-section {
+            background: #fff3e0;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #ff9800;
+        }
+        .grouped-section-title {
+            font-weight: bold;
+            color: #e65100;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        .pardo-example {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .example-card {
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .example-card h4 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        .use-case {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .use-case h4 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        .side-input-diagram {
+            position: relative;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .main-pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .side-pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            position: relative;
+        }
+        .connector-line {
+            position: absolute;
+            width: 2px;
+            height: 60px;
+            background: #ff9800;
+            left: 50%;
+            top: -30px;
+        }
+        .connector-arrow {
+            position: absolute;
+            left: 50%;
+            top: -35px;
+            transform: translateX(-50%);
+            color: #ff9800;
+            font-size: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .comparison-card {
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .comparison-card h3 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        .highlight-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .highlight-box strong {
+            color: #e65100;
+        }
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .pros {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #4caf50;
+        }
+        .cons {
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #f44336;
+        }
+        .pros h4 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .cons h4 {
+            color: #c62828;
+            margin-top: 0;
+        }
+        .key-point {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #1976d2;
+        }
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        .step-number {
+            background: #4285f4;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Dataflow 主要変換処理</h1>
+    <p class="subtitle">GroupBy、ParDo、SideInputの仕組みと使い方</p>
+
+    <!-- GroupBy Section -->
+    <div class="container">
+        <h2 class="section-title">📦 GroupBy変換</h2>
+        <p>GroupBy（GroupByKey）は、<strong>同じキーを持つ要素をグループ化</strong>する変換です。MapReduceのShuffle処理に相当します。</p>
+        
+        <div class="key-point">
+            <strong>🎯 核心概念:</strong> キーバリューペア (key, value) を受け取り、(key, [value1, value2, ...]) に変換します。
+        </div>
+
+        <div class="visual-demo">
+            <h3 style="text-align: center; color: #1a73e8; margin-top: 0;">GroupByの動作イメージ</h3>
+            <div class="groupby-visual">
+                <div class="before-group">
+                    <div class="group-title">変換前: 個別の要素</div>
+                    <div class="group-item">('apple', 5)</div>
+                    <div class="group-item">('banana', 3)</div>
+                    <div class="group-item">('apple', 2)</div>
+                    <div class="group-item">('orange', 7)</div>
+                    <div class="group-item">('banana', 4)</div>
+                    <div class="group-item">('apple', 1)</div>
+                </div>
+                
+                <div class="arrow">→</div>
+                
+                <div class="after-group">
+                    <div class="group-title">変換後: キーごとにグループ化</div>
+                    <div class="grouped-section">
+                        <div class="grouped-section-title">🍎 'apple'</div>
+                        <div class="group-item">[5, 2, 1]</div>
+                    </div>
+                    <div class="grouped-section">
+                        <div class="grouped-section-title">🍌 'banana'</div>
+                        <div class="group-item">[3, 4]</div>
+                    </div>
+                    <div class="grouped-section">
+                        <div class="grouped-section-title">🍊 'orange'</div>
+                        <div class="group-item">[7]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-box">
+<span class="comment"># Apache Beam (Dataflow) での実装</span>
+<span class="keyword">import</span> apache_beam <span class="keyword">as</span> beam
+
+<span class="keyword">with</span> beam.Pipeline() <span class="keyword">as</span> p:
+    <span class="comment"># 単語のカウント例</span>
+    word_counts = (
+        p
+        | <span class="string">'Create'</span> >> beam.Create([
+            <span class="string">'apple banana apple'</span>,
+            <span class="string">'banana orange apple'</span>,
+            <span class="string">'orange orange'</span>
+        ])
+        | <span class="string">'Split'</span> >> beam.FlatMap(<span class="keyword">lambda</span> line: line.split())
+        | <span class="string">'PairWithOne'</span> >> beam.Map(<span class="keyword">lambda</span> word: (word, <span class="number">1</span>))
+        | <span class="string">'GroupByKey'</span> >> beam.GroupByKey()  <span class="comment"># ← ここでグループ化</span>
+        | <span class="string">'Sum'</span> >> beam.Map(<span class="keyword">lambda</span> kv: (kv[<span class="number">0</span>], sum(kv[<span class="number">1</span>])))
+    )
+    
+<span class="comment"># GroupByKey後のデータ形式:</span>
+<span class="comment"># ('apple', [1, 1, 1])  → ('apple', 3)</span>
+<span class="comment"># ('banana', [1, 1])    → ('banana', 2)</span>
+<span class="comment"># ('orange', [1, 1])    → ('orange', 2)</span>
+        </div>
+
+        <div class="highlight-box">
+            <strong>⚠️ 重要な注意点:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li>GroupByKeyは<strong>シャッフル処理</strong>を伴うため、コストが高い</li>
+                <li>入力データは必ず<strong>(key, value)のペア</strong>である必要がある</li>
+                <li>キーごとに値がメモリに集約されるため、<strong>大量の値を持つキー</strong>はホットスポットになる可能性</li>
+            </ul>
+        </div>
+
+        <div class="use-case">
+            <h4>🎯 典型的なユースケース</h4>
+            <ul style="font-size: 14px;">
+                <li><strong>ログ集計:</strong> ユーザーIDごとにアクセスログを集約</li>
+                <li><strong>WordCount:</strong> 単語ごとに出現回数をカウント</li>
+                <li><strong>セッション分析:</strong> セッションIDごとにイベントをまとめる</li>
+                <li><strong>売上集計:</strong> 商品IDごとに売上データを集約</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ParDo Section -->
+    <div class="container">
+        <h2 class="section-title">⚙️ ParDo変換</h2>
+        <p>ParDo (Parallel Do) は、<strong>各要素に対して任意の処理を並列実行</strong>する最も基本的で柔軟な変換です。MapReduceのMapに相当しますが、より強力です。</p>
+        
+        <div class="key-point">
+            <strong>🎯 核心概念:</strong> DoFnクラスを使って、1つの入力要素から0個、1個、または複数の出力要素を生成できます。
+        </div>
+
+        <div class="visual-demo">
+            <h3 style="text-align: center; color: #1a73e8; margin-top: 0;">ParDoの動作イメージ</h3>
+            <div class="flow-diagram">
+                <div class="data-box data-box-input">
+                    <strong>入力</strong>
+                    <div class="data-item">"Hello World"</div>
+                    <div class="data-item">"Apache Beam"</div>
+                    <div class="data-item">"Data Flow"</div>
+                </div>
+                
+                <div class="arrow">→</div>
+                
+                <div class="transform-box">
+                    ParDo<br>
+                    <span style="font-size: 12px; font-weight: normal;">各要素を処理</span>
+                </div>
+                
+                <div class="arrow">→</div>
+                
+                <div class="data-box data-box-output">
+                    <strong>出力</strong>
+                    <div class="data-item">"hello", "world"</div>
+                    <div class="data-item">"apache", "beam"</div>
+                    <div class="data-item">"data", "flow"</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pardo-example">
+            <div class="example-card">
+                <h4>1対1の変換 (Map的な使い方)</h4>
+                <div class="code-box">
+<span class="keyword">class</span> MultiplyByTwoFn(beam.DoFn):
+    <span class="keyword">def</span> process(self, element):
+        <span class="keyword">yield</span> element * <span class="number">2</span>
+
+<span class="comment"># 使用例</span>
+numbers = p | beam.Create([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>])
+doubled = numbers | beam.ParDo(MultiplyByTwoFn())
+<span class="comment"># 結果: [2, 4, 6, 8]</span>
+                </div>
+            </div>
+
+            <div class="example-card">
+                <h4>1対多の変換 (FlatMap的な使い方)</h4>
+                <div class="code-box">
+<span class="keyword">class</span> SplitWordsFn(beam.DoFn):
+    <span class="keyword">def</span> process(self, element):
+        <span class="keyword">for</span> word <span class="keyword">in</span> element.split():
+            <span class="keyword">yield</span> word.lower()
+
+<span class="comment"># 使用例</span>
+lines = p | beam.Create([
+    <span class="string">'Hello World'</span>, 
+    <span class="string">'Apache Beam'</span>
+])
+words = lines | beam.ParDo(SplitWordsFn())
+<span class="comment"># 結果: ['hello', 'world', 'apache', 'beam']</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="example-card" style="margin-top: 20px;">
+            <h4>🔧 高度な使い方: Setup/Teardown、状態管理</h4>
+            <div class="code-box">
+<span class="keyword">class</span> EnrichWithDatabaseFn(beam.DoFn):
+    <span class="comment"># 初期化処理（ワーカーごとに1回実行）</span>
+    <span class="keyword">def</span> setup(self):
+        self.db_connection = connect_to_database()
+    
+    <span class="comment"># 終了処理（ワーカーごとに1回実行）</span>
+    <span class="keyword">def</span> teardown(self):
+        self.db_connection.close()
+    
+    <span class="comment"># 各要素の処理</span>
+    <span class="keyword">def</span> process(self, element):
+        <span class="comment"># データベースから追加情報を取得</span>
+        enriched_data = self.db_connection.query(element)
+        <span class="keyword">yield</span> enriched_data
+
+<span class="comment"># Stateを使った集計</span>
+<span class="keyword">class</span> StatefulCountFn(beam.DoFn):
+    COUNT_STATE = beam.DoFn.StateParam(
+        beam.coders.VarIntCoder()
+    )
+    
+    <span class="keyword">def</span> process(self, element, count_state=COUNT_STATE):
+        count = count_state.read() <span class="keyword">or</span> <span class="number">0</span>
+        count += <span class="number">1</span>
+        count_state.write(count)
+        <span class="keyword">yield</span> (element, count)
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong>💡 ParDoの強力な機能:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li><strong>柔軟な出力:</strong> 1要素から0個、1個、複数個の出力が可能</li>
+                <li><strong>副作用:</strong> ログ出力、外部API呼び出しなどが可能</li>
+                <li><strong>ライフサイクル:</strong> setup()とteardown()でリソース管理</li>
+                <li><strong>状態管理:</strong> State APIで要素間の状態を保持可能</li>
+                <li><strong>タイマー:</strong> Timer APIで時間ベースの処理が可能</li>
+            </ul>
+        </div>
+
+        <div class="use-case">
+            <h4>🎯 典型的なユースケース</h4>
+            <ul style="font-size: 14px;">
+                <li><strong>データクレンジング:</strong> 不正なデータのフィルタリングや正規化</li>
+                <li><strong>データ変換:</strong> フォーマット変換、フィールド追加・削除</li>
+                <li><strong>外部API呼び出し:</strong> APIからデータを取得してエンリッチメント</li>
+                <li><strong>複雑なパース処理:</strong> JSON、XML、ログファイルのパース</li>
+                <li><strong>データ検証:</strong> バリデーションルールの適用</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SideInput Section -->
+    <div class="container">
+        <h2 class="section-title">📥 SideInput（サイド入力）</h2>
+        <p>SideInputは、<strong>メインのデータパイプラインに追加のデータを提供</strong>する仕組みです。ParDo処理中に参照データやメタデータにアクセスできます。</p>
+        
+        <div class="key-point">
+            <strong>🎯 核心概念:</strong> メインの入力とは別に、補助的なデータ（辞書、リスト、設定値など）を全ての要素処理で共有します。
+        </div>
+
+        <div class="visual-demo">
+            <h3 style="text-align: center; color: #1a73e8; margin-top: 0;">SideInputの動作イメージ</h3>
+            
+            <div class="side-input-diagram">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <strong style="color: #ff9800;">📋 Side Input (補助データ)</strong>
+                    <div class="data-box" style="display: inline-block; margin-top: 10px;">
+                        <div class="data-item">{'USD': 110, 'EUR': 130}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">為替レート辞書</div>
+                    </div>
+                </div>
+
+                <div style="position: relative;">
+                    <div class="connector-arrow">↓</div>
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="main-pipeline">
+                    <div class="data-box data-box-input">
+                        <strong>Main Input</strong>
+                        <div class="data-item">('USD', 100)</div>
+                        <div class="data-item">('EUR', 50)</div>
+                        <div class="data-item">('USD', 200)</div>
+                    </div>
+                    
+                    <div class="arrow">→</div>
+                    
+                    <div class="transform-box" style="background: #ff9800;">
+                        ParDo with<br>SideInput
+                    </div>
+                    
+                    <div class="arrow">→</div>
+                    
+                    <div class="data-box data-box-output">
+                        <strong>Output</strong>
+                        <div class="data-item">11,000円</div>
+                        <div class="data-item">6,500円</div>
+                        <div class="data-item">22,000円</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-box">
+<span class="comment"># Side Inputの実装例</span>
+<span class="keyword">import</span> apache_beam <span class="keyword">as</span> beam
+<span class="keyword">from</span> apache_beam.pvalue <span class="keyword">import</span> AsDict, AsList, AsSingleton
+
+<span class="keyword">class</span> EnrichWithExchangeRateFn(beam.DoFn):
+    <span class="keyword">def</span> process(self, element, rates_dict):
+        currency, amount = element
+        <span class="comment"># Side Inputから為替レートを取得</span>
+        rate = rates_dict[currency]
+        jpy_amount = amount * rate
+        <span class="keyword">yield</span> (currency, amount, jpy_amount)
+
+<span class="keyword">with</span> beam.Pipeline() <span class="keyword">as</span> p:
+    <span class="comment"># メインデータ: 外貨金額</span>
+    transactions = p | <span class="string">'CreateTransactions'</span> >> beam.Create([
+        (<span class="string">'USD'</span>, <span class="number">100</span>),
+        (<span class="string">'EUR'</span>, <span class="number">50</span>),
+        (<span class="string">'USD'</span>, <span class="number">200</span>),
+    ])
+    
+    <span class="comment"># Side Input: 為替レート</span>
+    exchange_rates = p | <span class="string">'CreateRates'</span> >> beam.Create([
+        (<span class="string">'USD'</span>, <span class="number">110</span>),
+        (<span class="string">'EUR'</span>, <span class="number">130</span>),
+    ])
+    
+    <span class="comment"># Side Inputを辞書として変換</span>
+    rates_dict = beam.pvalue.AsDict(exchange_rates)
+    
+    <span class="comment"># メインデータにSide Inputを適用</span>
+    enriched = transactions | beam.ParDo(
+        EnrichWithExchangeRateFn(),
+        rates_dict=rates_dict  <span class="comment"># ← Side Inputを渡す</span>
+    )
+        </div>
+
+        <div class="workflow-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <strong>Side Inputの作成</strong><br>
+                <span style="font-size: 14px; color: #666;">別のPCollectionとして補助データを準備</span>
+            </div>
+        </div>
+
+        <div class="workflow-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <strong>ビュー変換</strong><br>
+                <span style="font-size: 14px; color: #666;">AsDict, AsList, AsSingletonで適切な形式に変換</span>
+            </div>
+        </div>
+
+        <div class="workflow-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <strong>ParDoで参照</strong><br>
+                <span style="font-size: 14px; color: #666;">process()メソッドの引数として受け取り、各要素処理で使用</span>
+            </div>
+        </div>
+
+        <h3 style="color: #1a73e8; margin-top: 30px;">Side Inputのビュー形式</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ビュー形式</th>
+                    <th>説明</th>
+                    <th>使用例</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>AsDict</strong></td>
+                    <td>PCollectionを辞書に変換<br>(key, value)ペアが必要</td>
+                    <td>マスタデータの参照、設定値の取得</td>
+                </tr>
+                <tr>
+                    <td><strong>AsList</strong></td>
+                    <td>PCollectionをリストに変換<br>全要素を順序付きで保持</td>
+                    <td>ホワイトリスト、ブラックリストの参照</td>
+                </tr>
+                <tr>
+                    <td><strong>AsSingleton</strong></td>
+                    <td>PCollectionを単一の値に変換<br>1要素のみを含む必要がある</td>
+                    <td>グローバル設定値、集計結果の参照</td>
+                </tr>
+                <tr>
+                    <td><strong>AsIter</strong></td>
+                    <td>PCollectionをイテレータに変換<br>大量データの効率的な走査</td>
+                    <td>大きなデータセットの逐次処理</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="pardo-example">
+            <div class="example-card">
+                <h4>例1: マスタデータとのJOIN</h4>
+                <div class="code-box">
+<span class="keyword">class</span> JoinWithMasterFn(beam.DoFn):
+    <span class="keyword">def</span> process(self, element, master_dict):
+        user_id, value = element
+        user_info = master_dict.get(user_id)
+        <span class="keyword">if</span> user_info:
+            <span class="keyword">yield</span> {
+                <span class="string">'user_id'</span>: user_id,
+                <span class="string">'value'</span>: value,
+                <span class="string">'name'</span>: user_info[<span class="string">'name'</span>],
+                <span class="string">'email'</span>: user_info[<span class="string">'email'</span>]
+            }
+
+<span class="comment"># ユーザーマスタをSide Inputとして使用</span>
+user_master = (p 
+    | beam.io.ReadFromBigQuery(table=<span class="string">'master.users'</span>)
+    | beam.Map(<span class="keyword">lambda</span> x: (x[<span class="string">'user_id'</span>], x))
+)
+master_dict = beam.pvalue.AsDict(user_master)
+
+transactions | beam.ParDo(
+    JoinWithMasterFn(),
+    master_dict=master_dict
+)
+                </div>
+            </div>
+
+            <div class="example-card">
+                <h4>例2: ブラックリストフィルタリング</h4>
+                <div class="code-box">
+<span class="keyword">class</span> FilterBlacklistFn(beam.DoFn):
+    <span class="keyword">def</span> process(self, element, blacklist):
+        user_id = element[<span class="string">'user_id'</span>]
+        <span class="keyword">if</span> user_id <span class="keyword">not</span> <span class="keyword">in</span> blacklist:
+            <span class="keyword">yield</span> element
+
+<span class="comment"># ブラックリストをSide Inputとして使用</span>
+blacklist_users = (p
+    | beam.io.ReadFromText(<span class="string">'blacklist.txt'</span>)
+    | beam.Map(<span class="keyword">lambda</span> x: x.strip())
+)
+blacklist_set = beam.pvalue.AsList(blacklist_users)
+
+events | beam.ParDo(
+    FilterBlacklistFn(),
+    blacklist=blacklist_set
+)
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong>⚠️ Side Inputの制約と注意点:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li><strong>メモリに収まる必要:</strong> Side Inputは全ワーカーのメモリに展開されるため、大きすぎるデータは使用不可</li>
+                <li><strong>推奨サイズ:</strong> 通常は数MB～数百MB程度まで。数GB以上は避けるべき</li>
+                <li><strong>更新頻度:</strong> ストリーミングでは定期的に更新される（ウィンドウごと）</li>
+                <li><strong>代替手段:</strong> 大きなデータはCoGroupByKeyやBigQueryの直接参照を検討</li>
+            </ul>
+        </div>
+
+        <div class="use-case">
+            <h4>🎯 典型的なユースケース</h4>
+            <ul style="font-size: 14px;">
+                <li><strong>マスタデータ参照:</strong> ユーザー情報、商品情報、カテゴリマスタとの結合</li>
+                <li><strong>設定値の適用:</strong> グローバル設定、閾値、パラメータの参照</li>
+                <li><strong>フィルタリング:</strong> ホワイトリスト/ブラックリストによるフィルタ</li>
+                <li><strong>データエンリッチメント:</strong> 追加属性の付与、分類ラベルの追加</li>
+                <li><strong>正規化・変換:</strong> 辞書ベースの値変換、コード変換</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Comparison Section -->
+    <div class="container">
+        <h2 class="section-title">⚖️ 3つの変換の比較</h2>
+        
+        <div class="comparison-grid">
+            <div class="comparison-card">
+                <h3>GroupBy</h3>
+                <p style="font-size: 14px; line-height: 1.6;">
+                    <strong>目的:</strong> データの集約<br>
+                    <strong>入力:</strong> (K, V)ペア<br>
+                    <strong>出力:</strong> (K, [V])<br>
+                    <strong>特徴:</strong> シャッフル処理<br>
+                    <strong>コスト:</strong> 高い
+                </p>
+            </div>
+
+            <div class="comparison-card">
+                <h3>ParDo</h3>
+                <p style="font-size: 14px; line-height: 1.6;">
+                    <strong>目的:</strong> 要素単位の処理<br>
+                    <strong>入力:</strong> 任意の要素<br>
+                    <strong>出力:</strong> 0個以上の要素<br>
+                    <strong>特徴:</strong> 並列実行<br>
+                    <strong>コスト:</strong> 低い
+                </p>
+            </div>
+
+            <div class="comparison-card">
+                <h3>SideInput</h3>
+                <p style="font-size: 14px; line-height: 1.6;">
+                    <strong>目的:</strong> 補助データ参照<br>
+                    <strong>入力:</strong> 別PCollection<br>
+                    <strong>出力:</strong> ビュー形式<br>
+                    <strong>特徴:</strong> 全要素で共有<br>
+                    <strong>コスト:</strong> 中程度
+                </p>
+            </div>
+        </div>
+
+        <h3 style="color: #1a73e8; margin-top: 30px;">組み合わせパターン</h3>
+        
+        <div class="example-card">
+            <h4>パターン1: GroupBy → ParDo</h4>
+            <div class="code-box">
+<span class="comment"># ユーザーごとにイベントを集約し、統計を計算</span>
+(events
+    | beam.Map(<span class="keyword">lambda</span> e: (e[<span class="string">'user_id'</span>], e))
+    | beam.GroupByKey()  <span class="comment"># ユーザーごとにグループ化</span>
+    | beam.ParDo(CalculateUserStatsFn())  <span class="comment"># 各ユーザーの統計を計算</span>
+)
+            </div>
+        </div>
+
+        <div class="example-card">
+            <h4>パターン2: ParDo with SideInput</h4>
+            <div class="code-box">
+<span class="comment"># イベントをマスタデータでエンリッチしてからフィルタリング</span>
+master_dict = beam.pvalue.AsDict(master_data)
+blacklist = beam.pvalue.AsList(blacklist_data)
+
+(events
+    | beam.ParDo(EnrichFn(), master_dict=master_dict)
+    | beam.ParDo(FilterFn(), blacklist=blacklist)
+)
+            </div>
+        </div>
+
+        <div class="example-card">
+            <h4>パターン3: ParDo → GroupBy → ParDo</h4>
+            <div class="code-box">
+<span class="comment"># 完全なETLパイプライン</span>
+(raw_data
+    | beam.ParDo(ParseAndCleanFn())  <span class="comment"># データクレンジング</span>
+    | beam.Map(<span class="keyword">lambda</span> x: (x[<span class="string">'key'</span>], x))
+    | beam.GroupByKey()  <span class="comment"># キーごとに集約</span>
+    | beam.ParDo(AggregateFn())  <span class="comment"># 集計処理</span>
+    | beam.io.WriteToBigQuery(...)  <span class="comment"># 出力</span>
+)
+            </div>
+        </div>
+    </div>
+
+    <!-- Best Practices -->
+    <div class="container">
+        <h2 class="section-title">💡 ベストプラクティス</h2>
+        
+        <div class="pros-cons">
+            <div class="pros">
+                <h4>✅ やるべきこと</h4>
+                <ul style="font-size: 14px;">
+                    <li>GroupByKeyの前にCombinePerKeyで事前集約</li>
+                    <li>ParDoでバッチ処理（複数要素をまとめて処理）</li>
+                    <li>Side Inputは小さいデータに限定</li>
+                    <li>setup/teardownで接続を再利用</li>
+                    <li>適切なウィンドウ設定でデータ量を制御</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h4>❌ 避けるべきこと</h4>
+                <ul style="font-size: 14px;">
+                    <li>不要なGroupByKey（シャッフルコストが高い）</li>
+                    <li>ParDoで外部APIを同期呼び出し（遅い）</li>
+                    <li>巨大なSide Input（メモリ不足の原因）</li>
+                    <li>状態を持つグローバル変数の使用</li>
+                    <li>setup/teardownの省略（リソースリーク）</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>🚀 パフォーマンス最適化のヒント</h4>
+            <ul style="font-size: 14px; line-height: 1.8;">
+                <li><strong>GroupByKeyの削減:</strong> CombinePerKeyを使って事前に集約してからGroupByKey</li>
+                <li><strong>ホットキー対策:</strong> Combiner関数を使ってデータを分散</li>
+                <li><strong>バッチAPI呼び出し:</strong> 複数要素をまとめて外部APIを呼び出す</li>
+                <li><strong>Side Inputのキャッシュ:</strong> 頻繁に使うデータはSide Inputに</li>
+                <li><strong>適切なワーカー数:</strong> データ量に応じてワーカーをスケーリング</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📚 まとめ</h2>
+        <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50;">
+            <h3 style="color: #2e7d32; margin-top: 0;">🎓 3つの変換の使い分け</h3>
+            <ul style="line-height: 1.8;">
+                <li><strong>GroupBy:</strong> キーごとにデータを集約したいとき（集計、結合など）</li>
+                <li><strong>ParDo:</strong> 各要素に対して処理を適用したいとき（変換、フィルタ、外部API呼び出しなど）</li>
+                <li><strong>SideInput:</strong> 小さな参照データを全要素で共有したいとき（マスタ参照、設定値など）</li>
+            </ul>
+            <p style="margin-top: 15px; font-size: 14px;">
+                これら3つを組み合わせることで、複雑なデータパイプラインを効率的に構築できます。
+                特に、<strong>ParDoとSideInputの組み合わせ</strong>は、データエンリッチメントやフィルタリングで非常に強力です。
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
