@@ -39,3 +39,7 @@ index:
     items:
         - name: interleave
           source: null
+  - dir: dataflow
+    items:
+      - name: sliding-window
+        source: null
