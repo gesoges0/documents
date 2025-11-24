@@ -33,12 +33,16 @@ index:
         source: null
   - dir: analysis
     items:
-        - name: cohort-analysis
-          source: null
+      - name: cohort-analysis
+        source: null
+  - dir: bigquery
+    items:
+      - name: authorized_view
+        source: null
   - dir: spanner
     items:
-        - name: interleave
-          source: null
+      - name: interleave
+        source: null
   - dir: dataflow
     items:
       - name: sliding-window
