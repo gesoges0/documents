@@ -43,3 +43,7 @@ index:
     items:
       - name: sliding-window
         source: null
+  - dir: ml
+    items:
+      - name: auc
+        source: null
