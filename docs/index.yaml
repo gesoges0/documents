@@ -27,6 +27,8 @@ index:
         source: https://docs.getdbt.com/best-practices/how-we-structure/4-marts
       - name: best_practice-the_rest_of_the_project
         source: https://docs.getdbt.com/best-practices/how-we-structure/5-the-rest-of-the-project
+      - name: layer-strategy-for-cache
+        source: null
   - dir: db
     items:
       - name: normalization
