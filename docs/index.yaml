@@ -47,6 +47,10 @@ index:
     items:
       - name: interleave
         source: null
+  - dir: storage-transfer-service
+    items:
+      - name: base
+        source: null
   - dir: dataflow
     items:
       - name: sliding-window
