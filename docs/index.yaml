@@ -43,6 +43,8 @@ index:
         source: null
       - name: cache
         source: null
+      - name: dlp
+        source: null
   - dir: bigtable
     items:
       - name: raw-key
