@@ -35,3 +35,7 @@ index:
     items:
         - name: cohort-analysis
           source: null
+  - dir: spanner
+    items:
+        - name: interleave
+          source: null
