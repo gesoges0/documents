@@ -39,6 +39,8 @@ index:
     items:
       - name: authorized_view
         source: null
+      - name: cache
+        source: null
   - dir: bigtable
     items:
       - name: raw-key
