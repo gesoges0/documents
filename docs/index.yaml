@@ -39,6 +39,10 @@ index:
     items:
       - name: authorized_view
         source: null
+  - dir: bigtable
+    items:
+      - name: raw-key
+        source: null
   - dir: spanner
     items:
       - name: interleave
