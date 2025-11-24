@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery 承認済みビュー解説</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: #1a73e8;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .scenario {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            border: 3px solid #ddd;
+        }
+        .scenario-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .without-title {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .with-title {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .actor {
+            background: white;
+            border: 2px solid #4285f4;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .actor-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .actor-name {
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 5px;
+        }
+        .actor-desc {
+            font-size: 13px;
+            color: #666;
+        }
+        .resource {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .resource-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .resource-name {
+            font-weight: bold;
+            color: #e65100;
+            margin-bottom: 5px;
+        }
+        .arrow-down {
+            text-align: center;
+            font-size: 24px;
+            color: #666;
+            margin: 10px 0;
+        }
+        .result-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .result-denied {
+            background: #ffcdd2;
+            color: #c62828;
+            border: 2px solid #c62828;
+        }
+        .result-allowed {
+            background: #c8e6c9;
+            color: #2e7d32;
+            border: 2px solid #2e7d32;
+        }
+        .architecture-diagram {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #e0e0e0;
+        }
+        .layer {
+            margin: 20px 0;
+            position: relative;
+        }
+        .layer-title {
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .layer-content {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+        .box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 200px;
+        }
+        .user-box {
+            background: #e3f2fd;
+            border: 2px solid #1976d2;
+        }
+        .view-box {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+        .table-box {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+        }
+        .permission-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .has-permission {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .no-permission {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .flow-arrow {
+            font-size: 32px;
+            color: #4caf50;
+        }
+        .code-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .keyword {
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .string {
+            color: #c62828;
+        }
+        .comment {
+            color: #388e3c;
+        }
+        .step-by-step {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+        }
+        .step-number {
+            background: #4caf50;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #2e7d32;
+            margin-bottom: 5px;
+        }
+        .use-case {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .use-case h4 {
+            margin-top: 0;
+            color: #1565c0;
+        }
+        .benefit-card {
+            background: white;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .benefit-card h4 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .warning-box strong {
+            color: #e65100;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .example-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .example-card {
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .example-card h4 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        .security-layer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .highlight {
+            background: #fff9c4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 BigQuery 承認済みビュー</h1>
+    <p class="subtitle">Authorized Views: データアクセス制御の強力な仕組み</p>
+
+    <div class="container">
+        <h2 class="section-title">📖 承認済みビューとは</h2>
+        <p>承認済みビュー（Authorized Views）は、<strong>基となるテーブルへの直接アクセス権限がないユーザーでも、ビューを通じて特定のデータにアクセスできる</strong>ようにする仕組みです。</p>
+        
+        <div style="background: #e8f0fe; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #1a73e8; margin-top: 0;">🎯 核心概念</h3>
+            <p style="font-size: 16px; line-height: 1.8;">
+                ビューに<span class="highlight">「基となるテーブルからデータを読み取る権限」</span>を与え、
+                ユーザーには<span class="highlight">「そのビューを使う権限だけ」</span>を付与します。
+                これにより、テーブル全体へのアクセスを許可せずに、必要なデータのみを公開できます。
+            </p>
+        </div>
+
+        <div class="comparison">
+            <div class="scenario">
+                <div class="scenario-title without-title">❌ 通常のビュー（承認なし）</div>
+                
+                <div class="actor">
+                    <div class="actor-icon">👤</div>
+                    <div class="actor-name">ユーザー（アナリスト）</div>
+                    <div class="actor-desc">ビューにアクセス</div>
+                </div>
+
+                <div class="arrow-down">↓ クエリ実行</div>
+
+                <div class="resource">
+                    <div class="resource-icon">👁️</div>
+                    <div class="resource-name">通常のビュー</div>
+                    <div style="font-size: 12px; margin-top: 5px;">SELECT * FROM sensitive_table<br>WHERE department = 'Sales'</div>
+                </div>
+
+                <div class="arrow-down">↓ 基のテーブルを参照</div>
+
+                <div class="resource">
+                    <div class="resource-icon">🗄️</div>
+                    <div class="resource-name">sensitive_table</div>
+                    <div class="permission-badge no-permission">❌ アクセス権なし</div>
+                </div>
+
+                <div class="result-box result-denied">
+                    ⛔ アクセス拒否<br>
+                    <span style="font-size: 13px;">ユーザーは基のテーブルへの権限が必要</span>
+                </div>
+            </div>
+
+            <div class="scenario">
+                <div class="scenario-title with-title">✅ 承認済みビュー</div>
+                
+                <div class="actor">
+                    <div class="actor-icon">👤</div>
+                    <div class="actor-name">ユーザー（アナリスト）</div>
+                    <div class="actor-desc">ビューにアクセス</div>
+                </div>
+
+                <div class="arrow-down">↓ クエリ実行</div>
+
+                <div class="resource">
+                    <div class="resource-icon">✅</div>
+                    <div class="resource-name">承認済みビュー</div>
+                    <div class="permission-badge has-permission">✓ ビューへの権限あり</div>
+                    <div style="font-size: 12px; margin-top: 5px;">SELECT * FROM sensitive_table<br>WHERE department = 'Sales'</div>
+                </div>
+
+                <div class="arrow-down">↓ 承認されたアクセス</div>
+
+                <div class="resource">
+                    <div class="resource-icon">🗄️</div>
+                    <div class="resource-name">sensitive_table</div>
+                    <div class="permission-badge has-permission">✓ ビューが代理アクセス</div>
+                </div>
+
+                <div class="result-box result-allowed">
+                    ✅ アクセス成功<br>
+                    <span style="font-size: 13px;">ビューが承認されているため、データ取得可能</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🏗️ アーキテクチャと動作の仕組み</h2>
+        
+        <div class="architecture-diagram">
+            <div class="layer">
+                <div class="layer-title">👥 ユーザー層</div>
+                <div class="layer-content">
+                    <div class="box user-box">
+                        <div style="font-size: 24px; margin-bottom: 8px;">👤</div>
+                        <strong>営業チーム</strong>
+                        <div class="permission-badge no-permission">機密テーブル: ✗</div>
+                        <div class="permission-badge has-permission">営業ビュー: ✓</div>
+                    </div>
+                    <div class="box user-box">
+                        <div style="font-size: 24px; margin-bottom: 8px;">👤</div>
+                        <strong>マーケチーム</strong>
+                        <div class="permission-badge no-permission">機密テーブル: ✗</div>
+                        <div class="permission-badge has-permission">マーケビュー: ✓</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow-down" style="font-size: 28px; color: #4caf50;">↓↓</div>
+
+            <div class="layer">
+                <div class="layer-title">👁️ ビュー層（承認済み）</div>
+                <div class="layer-content">
+                    <div class="box view-box">
+                        <strong>sales_view</strong>
+                        <div style="font-size: 12px; margin-top: 8px;">
+                            WHERE department='Sales'
+                        </div>
+                        <div class="permission-badge has-permission">承認済み</div>
+                    </div>
+                    <div class="box view-box">
+                        <strong>marketing_view</strong>
+                        <div style="font-size: 12px; margin-top: 8px;">
+                            WHERE department='Marketing'
+                        </div>
+                        <div class="permission-badge has-permission">承認済み</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="security-layer">
+                🔐 承認メカニズム: ビューが基のテーブルへのアクセス権を持つ
+            </div>
+
+            <div class="layer">
+                <div class="layer-title">🗄️ データ層</div>
+                <div class="layer-content">
+                    <div class="box table-box" style="min-width: 400px;">
+                        <strong>employee_data（機密テーブル）</strong>
+                        <div style="font-size: 12px; margin-top: 8px;">
+                            全社員の給与、個人情報、評価データ
+                        </div>
+                        <div class="permission-badge no-permission">直接アクセス不可</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>🔑 重要ポイント:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li>ユーザーは基のテーブル（employee_data）に直接アクセスできない</li>
+                <li>ビュー（sales_view、marketing_view）が承認されているため、ビュー経由でのみデータ取得可能</li>
+                <li>各ビューは必要なデータのみをフィルタリングして提供</li>
+                <li>管理者はテーブルに対する権限を細かく制御できる</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">⚙️ 設定手順</h2>
+        
+        <div class="step-by-step">
+            <h3 style="color: #2e7d32; margin-top: 0;">📋 承認済みビューの作成ステップ</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">基となるテーブルを準備</div>
+                    <div style="font-size: 14px; color: #666;">機密データを含むテーブルを作成または既存のテーブルを特定</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">ビューを作成</div>
+                    <div style="font-size: 14px; color: #666;">必要なデータのみを公開するSQLクエリでビューを定義</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">ビューを承認済みビューとして設定</div>
+                    <div style="font-size: 14px; color: #666;">基のテーブルのアクセス制御でビューを承認</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-title">ユーザーにビューへのアクセス権を付与</div>
+                    <div style="font-size: 14px; color: #666;">ユーザーやグループにビューの閲覧権限を付与</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="color: #1a73e8; margin-top: 30px;">💻 実装例</h3>
+
+        <div class="code-box">
+<span class="comment">-- Step 1: 基のテーブル（機密データ）</span>
+<span class="keyword">CREATE TABLE</span> <span class="string">`project.dataset.employee_data`</span> (
+    employee_id <span class="keyword">INT64</span>,
+    name <span class="keyword">STRING</span>,
+    department <span class="keyword">STRING</span>,
+    salary <span class="keyword">INT64</span>,
+    performance_rating <span class="keyword">FLOAT64</span>,
+    ssn <span class="keyword">STRING</span>
+);
+
+<span class="comment">-- Step 2: 承認済みビューの作成（営業部門のみ）</span>
+<span class="keyword">CREATE VIEW</span> <span class="string">`project.dataset.sales_employee_view`</span> <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+    employee_id,
+    name,
+    department,
+    performance_rating  <span class="comment">-- 給与やSSNは除外</span>
+<span class="keyword">FROM</span> <span class="string">`project.dataset.employee_data`</span>
+<span class="keyword">WHERE</span> department = <span class="string">'Sales'</span>;
+
+<span class="comment">-- Step 3: ビューを承認済みビューとして設定 (gcloudコマンド)</span>
+<span class="comment">-- 基のテーブルのデータセットに対してビューを承認</span>
+        </div>
+
+        <div class="code-box" style="background: #263238; color: #aed581;">
+<span style="color: #80cbc4;"># Step 3: gcloudコマンドで承認</span>
+bq update --dataset \
+  --add_authorized_view project:dataset.sales_employee_view \
+  project:dataset
+
+<span style="color: #80cbc4;"># または、Terraformでの設定例</span>
+resource "google_bigquery_dataset_access" "authorized_view" {
+  dataset_id = "dataset"
+  project    = "project"
+  
+  view {
+    project_id = "project"
+    dataset_id = "dataset"
+    table_id   = "sales_employee_view"
+  }
+}
+
+<span style="color: #80cbc4;"># Step 4: ユーザーにビューへのアクセス権を付与</span>
+bq add-iam-policy-binding \
+  --member='group:sales-team@company.com' \
+  --role='roles/bigquery.dataViewer' \
+  project:dataset.sales_employee_view
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ 注意事項:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li>ビューと基のテーブルは<strong>同じプロジェクト</strong>にある必要がある（異なるデータセットは可能）</li>
+                <li>承認はデータセットレベルで設定される</li>
+                <li>ビューを承認すると、そのビューは基のテーブルの全データにアクセス可能になる</li>
+                <li>ビュー内のフィルタリングロジックでセキュリティを確保する必要がある</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🎯 実際のユースケース</h2>
+        
+        <div class="use-case">
+            <h4>📊 部門別データアクセス制御</h4>
+            <p><strong>シナリオ:</strong> 全社員データを含むテーブルがあるが、各部門には自部門のデータのみアクセスさせたい</p>
+            <div class="code-box">
+<span class="comment">-- 営業部門用ビュー</span>
+<span class="keyword">CREATE VIEW</span> sales_dept_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> all_employees 
+<span class="keyword">WHERE</span> department = <span class="string">'Sales'</span>;
+
+<span class="comment">-- マーケティング部門用ビュー</span>
+<span class="keyword">CREATE VIEW</span> marketing_dept_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> all_employees 
+<span class="keyword">WHERE</span> department = <span class="string">'Marketing'</span>;
+            </div>
+            <p style="font-size: 14px; margin-top: 10px;"><strong>効果:</strong> 各部門は自部門のデータのみ閲覧可能。他部門のデータや全社データへのアクセスは不可。</p>
+        </div>
+
+        <div class="use-case">
+            <h4>🔒 個人情報の隠蔽</h4>
+            <p><strong>シナリオ:</strong> 顧客データを分析チームに提供したいが、個人を特定できる情報（PII）は見せたくない</p>
+            <div class="code-box">
+<span class="comment">-- 匿名化された顧客データビュー</span>
+<span class="keyword">CREATE VIEW</span> anonymized_customer_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+    <span class="keyword">HASH</span>(customer_id) <span class="keyword">AS</span> customer_hash,  <span class="comment">-- IDをハッシュ化</span>
+    age_range,                              <span class="comment">-- 年齢は範囲で提供</span>
+    prefecture,                             <span class="comment">-- 都道府県レベルまで</span>
+    purchase_amount,
+    purchase_date
+<span class="keyword">FROM</span> customer_master
+<span class="comment">-- 名前、住所、電話番号、メールアドレスは除外</span>
+            </div>
+            <p style="font-size: 14px; margin-top: 10px;"><strong>効果:</strong> 分析に必要なデータは提供しつつ、個人を特定できる情報は保護。</p>
+        </div>
+
+        <div class="use-case">
+            <h4>💰 給与データの段階的公開</h4>
+            <p><strong>シナリオ:</strong> 経営層には全社員の給与データ、マネージャーには自チームのみ、一般社員には自分のみ</p>
+            <div class="code-box">
+<span class="comment">-- マネージャー用: 自チームの給与データ</span>
+<span class="keyword">CREATE VIEW</span> manager_team_salary_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+    e.employee_id,
+    e.name,
+    e.salary,
+    e.team_id
+<span class="keyword">FROM</span> employee_data e
+<span class="keyword">WHERE</span> e.team_id <span class="keyword">IN</span> (
+    <span class="keyword">SELECT</span> team_id 
+    <span class="keyword">FROM</span> manager_mapping 
+    <span class="keyword">WHERE</span> manager_email = SESSION_USER()
+);
+
+<span class="comment">-- 経営層用: 全社員の給与データ（集計込み）</span>
+<span class="keyword">CREATE VIEW</span> executive_salary_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+    department,
+    <span class="keyword">COUNT</span>(*) <span class="keyword">AS</span> employee_count,
+    <span class="keyword">AVG</span>(salary) <span class="keyword">AS</span> avg_salary,
+    <span class="keyword">MIN</span>(salary) <span class="keyword">AS</span> min_salary,
+    <span class="keyword">MAX</span>(salary) <span class="keyword">AS</span> max_salary
+<span class="keyword">FROM</span> employee_data
+<span class="keyword">GROUP BY</span> department;
+            </div>
+            <p style="font-size: 14px; margin-top: 10px;"><strong>効果:</strong> 役職に応じて適切な粒度でデータアクセスを制御。</p>
+        </div>
+
+        <div class="use-case">
+            <h4>🌐 クロスプロジェクトデータ共有</h4>
+            <p><strong>シナリオ:</strong> 本番環境のデータを分析環境に共有したいが、直接アクセスは許可したくない</p>
+            <div class="code-box">
+<span class="comment">-- 本番プロジェクト内で分析用ビューを作成</span>
+<span class="comment">-- production-project.prod_dataset</span>
+<span class="keyword">CREATE VIEW</span> analytics_safe_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+    order_id,
+    <span class="keyword">DATE</span>(order_timestamp) <span class="keyword">AS</span> order_date,  <span class="comment">-- タイムスタンプは日付に丸める</span>
+    product_id,
+    quantity,
+    <span class="keyword">ROUND</span>(price, <span class="number">-2</span>) <span class="keyword">AS</span> price_range        <span class="comment">-- 価格は100円単位に丸める</span>
+<span class="keyword">FROM</span> orders
+<span class="keyword">WHERE</span> order_status = <span class="string">'completed'</span>;            <span class="comment">-- 完了した注文のみ</span>
+
+<span class="comment">-- 分析プロジェクトのユーザーにビューへのアクセス権を付与</span>
+            </div>
+            <p style="font-size: 14px; margin-top: 10px;"><strong>効果:</strong> 本番テーブルへの直接アクセスを防ぎ、必要なデータのみを安全に共有。</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">✨ メリット</h2>
+        
+        <div class="benefit-card">
+            <h4>🔐 きめ細かいアクセス制御</h4>
+            <ul style="font-size: 14px; line-height: 1.8;">
+                <li>テーブル全体へのアクセスを許可せずに、必要な行・列のみを公開</li>
+                <li>複雑な権限管理を簡単なビュー定義で実現</li>
+                <li>WHERE句やJOINで動的なフィルタリングが可能</li>
+            </ul>
+        </div>
+
+        <div class="benefit-card">
+            <h4>🛡️ セキュリティの向上</h4>
+            <ul style="font-size: 14px; line-height: 1.8;">
+                <li>機密データへの直接アクセスを防止</li>
+                <li>個人情報（PII）の隠蔽・匿名化が容易</li>
+                <li>データ漏洩リスクの低減</li>
+            </ul>
+        </div>
+
+        <div class="benefit-card">
+            <h4>⚙️ 管理の簡素化</h4>
+            <ul style="font-size: 14px; line-height: 1.8;">
+                <li>ユーザーごとに個別の権限設定が不要</li>
+                <li>ビューの定義を変更するだけでアクセス範囲を調整可能</li>
+                <li>監査ログでアクセス履歴を追跡しやすい</li>
+            </ul>
+        </div>
+
+        <div class="benefit-card">
+            <h4>🚀 柔軟性</h4>
+            <ul style="font-size: 14px; line-height: 1.8;">
+                <li>複数のテーブルをJOINしたビューも承認可能</li>
+                <li>集計や変換を含む複雑なロジックにも対応</li>
+                <li>SESSION_USER()などの関数で動的なフィルタリングも可能</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">⚠️ 制限事項と注意点</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>制限内容</th>
+                    <th>対処法</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>プロジェクト制約</strong></td>
+                    <td>ビューと基のテーブルは同じプロジェクトにある必要がある</td>
+                    <td>異なるデータセットは可能。クロスプロジェクトの場合はデータ転送を検討</td>
+                </tr>
+                <tr>
+                    <td><strong>パフォーマンス</strong></td>
+                    <td>ビューは実行時にクエリが評価されるため、複雑なビューは遅い</td>
+                    <td>マテリアライズドビューの使用を検討</td>
+                </tr>
+                <tr>
+                    <td><strong>ネストの制限</strong></td>
+                    <td>承認済みビューの上に別の承認済みビューを作ることは非推奨</td>
+                    <td>シンプルな階層構造を維持する</td>
+                </tr>
+                <tr>
+                    <td><strong>外部テーブル</strong></td>
+                    <td>外部テーブル（GCS、Driveなど）には承認済みビューを使用できない</td>
+                    <td>データをBigQueryにインポートする</td>
+                </tr>
+                <tr>
+                    <td><strong>データの整合性</strong></td>
+                    <td>基のテーブルが変更されるとビューの結果も変わる</td>
+                    <td>スナップショットやマテリアライズドビューで固定</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warning-box" style="margin-top: 20px;">
+            <strong>🔍 セキュリティ上の注意:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li><strong>ビューのSQLを検証:</strong> WHERE句が適切にフィルタリングしているか確認</li>
+                <li><strong>定期的なレビュー:</strong> 承認済みビューのリストを定期的に監査</li>
+                <li><strong>最小権限の原則:</strong> 必要最小限のデータのみを公開</li>
+                <li><strong>テストデータでの検証:</strong> 本番適用前に権限設定を十分にテスト</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🆚 他の方法との比較</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>方法</th>
+                    <th>メリット</th>
+                    <th>デメリット</th>
+                    <th>適用場面</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>承認済みビュー</strong></td>
+                    <td>
+                        ・きめ細かい制御<br>
+                        ・SQLで柔軟に定義<br>
+                        ・動的フィルタリング可能
+                    </td>
+                    <td>
+                        ・同一プロジェクト制約<br>
+                        ・ビュー実行時のコスト
+                    </td>
+                    <td>
+                        部門別アクセス制御<br>
+                        PII隠蔽<br>
+                        行・列レベルの制御
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>行レベルセキュリティ<br>(Row-Level Security)</strong></td>
+                    <td>
+                        ・テーブルに直接設定<br>
+                        ・ビュー不要<br>
+                        ・ポリシーベース管理
+                    </td>
+                    <td>
+                        ・複雑な条件の設定が難しい<br>
+                        ・BigQuery Enterprise以上が必要
+                    </td>
+                    <td>
+                        ユーザーごとの動的フィルタ<br>
+                        マルチテナント環境
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>列レベルセキュリティ<br>(Column-Level Security)</strong></td>
+                    <td>
+                        ・列単位での制御<br>
+                        ・Policy Tagsで管理<br>
+                        ・Data Catalog連携
+                    </td>
+                    <td>
+                        ・行のフィルタリング不可<br>
+                        ・設定が複雑
+                    </td>
+                    <td>
+                        機密列の保護<br>
+                        PII列のマスキング
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>データセット権限</strong></td>
+                    <td>
+                        ・シンプル<br>
+                        ・管理が簡単
+                    </td>
+                    <td>
+                        ・データセット全体が対象<br>
+                        ・きめ細かい制御不可
+                    </td>
+                    <td>
+                        部門別データセット分離<br>
+                        シンプルな権限管理
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">💡 ベストプラクティス</h2>
+        
+        <div class="example-grid">
+            <div class="example-card">
+                <h4>✅ 推奨される設計</h4>
+                <ul style="font-size: 14px; line-height: 1.8;">
+                    <li>ビュー名に目的を明記（sales_view、anonymized_viewなど）</li>
+                    <li>WHERE句で確実にフィルタリング</li>
+                    <li>必要な列のみをSELECT</li>
+                    <li>定期的な権限レビュー</li>
+                    <li>ドキュメント化（何を隠蔽しているか記録）</li>
+                </ul>
+            </div>
+
+            <div class="example-card">
+                <h4>❌ 避けるべき設計</h4>
+                <ul style="font-size: 14px; line-height: 1.8;">
+                    <li>SELECT * でのビュー定義</li>
+                    <li>WHERE句なしの単純なビュー</li>
+                    <li>過度にネストしたビュー</li>
+                    <li>承認を乱発（必要最小限に）</li>
+                    <li>テストなしの本番適用</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code-box" style="margin-top: 20px;">
+<span class="comment">-- ✅ 良い例: 明確な目的とフィルタリング</span>
+<span class="keyword">CREATE VIEW</span> sales_team_customer_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> 
+    customer_id,
+    company_name,
+    industry,
+    contract_value,
+    <span class="keyword">DATE</span>(created_at) <span class="keyword">AS</span> signup_date
+<span class="keyword">FROM</span> customers
+<span class="keyword">WHERE</span> 
+    assigned_team = <span class="string">'Sales'</span>
+    <span class="keyword">AND</span> status = <span class="string">'active'</span>
+    <span class="keyword">AND</span> contract_value > <span class="number">0</span>;
+
+<span class="comment">-- ❌ 悪い例: フィルタなしで全データ公開</span>
+<span class="keyword">CREATE VIEW</span> all_data_view <span class="keyword">AS</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> sensitive_table;
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📚 まとめ</h2>
+        <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50;">
+            <h3 style="color: #2e7d32; margin-top: 0;">🎓 承認済みビューの本質</h3>
+            <ul style="line-height: 1.8;">
+                <li><strong>目的:</strong> 基のテーブルへの権限を持たないユーザーに、ビュー経由でデータアクセスを許可</li>
+                <li><strong>仕組み:</strong> ビューが「代理」として基のテーブルにアクセスし、ユーザーはビューのみにアクセス</li>
+                <li><strong>利点:</strong> 細かいアクセス制御、PII保護、管理の簡素化</li>
+                <li><strong>制約:</strong> 同一プロジェクト内のみ、パフォーマンス考慮が必要</li>
+                <li><strong>ユースケース:</strong> 部門別データ分離、個人情報保護、段階的データ公開</li>
+            </ul>
+            <p style="margin-top: 15px; font-size: 14px;">
+                承認済みビューは、BigQueryにおける<span class="highlight">強力なデータガバナンスツール</span>です。
+                適切に設計・運用することで、セキュリティを保ちながら必要なデータを効率的に共有できます。
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
