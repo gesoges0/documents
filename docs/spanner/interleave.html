@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Spanner インターリーブ解説</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .comparison {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .column {
+            flex: 1;
+        }
+        .column h3 {
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .without h3 {
+            background: #fee;
+            color: #c00;
+        }
+        .with h3 {
+            background: #efe;
+            color: #0a0;
+        }
+        .table-box {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .table-name {
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .row {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 3px solid #1a73e8;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .parent-row {
+            background: #e8f0fe;
+            border-left-color: #1a73e8;
+            font-weight: bold;
+        }
+        .child-row {
+            background: #fef7e0;
+            border-left-color: #fbbc04;
+            margin-left: 20px;
+            position: relative;
+        }
+        .child-row::before {
+            content: "└─";
+            position: absolute;
+            left: -15px;
+            color: #999;
+        }
+        .split-indicator {
+            text-align: center;
+            margin: 15px 0;
+            color: #999;
+            font-size: 20px;
+        }
+        .benefits {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        .benefits h3 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .benefits ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .benefits li {
+            margin: 8px 0;
+        }
+        .schema-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .keyword {
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .table-def {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        .comment {
+            color: #388e3c;
+        }
+        .performance {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .perf-card {
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .perf-bad {
+            background: #ffebee;
+            border: 2px solid #ef5350;
+        }
+        .perf-good {
+            background: #e8f5e9;
+            border: 2px solid #66bb6a;
+        }
+        .perf-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .perf-bad .perf-value {
+            color: #d32f2f;
+        }
+        .perf-good .perf-value {
+            color: #2e7d32;
+        }
+        .arrow {
+            font-size: 24px;
+            align-self: center;
+            color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Cloud Spanner インターリーブ</h1>
+    <p class="subtitle">親子関係のあるテーブルを物理的に近くに配置する機能</p>
+
+    <div class="container">
+        <h2>📋 インターリーブとは</h2>
+        <p>インターリーブ(Interleave)は、親テーブルと子テーブルのデータを物理的に同じ場所に保存することで、結合クエリのパフォーマンスを劇的に向上させる機能です。</p>
+        
+        <div class="schema-box">
+<span class="keyword">CREATE TABLE</span> <span class="table-def">Customers</span> (
+    CustomerId <span class="keyword">INT64</span> <span class="keyword">NOT NULL</span>,
+    Name <span class="keyword">STRING</span>(100),
+    Email <span class="keyword">STRING</span>(100),
+) <span class="keyword">PRIMARY KEY</span> (CustomerId);
+
+<span class="keyword">CREATE TABLE</span> <span class="table-def">Orders</span> (
+    CustomerId <span class="keyword">INT64</span> <span class="keyword">NOT NULL</span>,
+    OrderId <span class="keyword">INT64</span> <span class="keyword">NOT NULL</span>,
+    OrderDate <span class="keyword">DATE</span>,
+    TotalAmount <span class="keyword">FLOAT64</span>,
+) <span class="keyword">PRIMARY KEY</span> (CustomerId, OrderId),
+  <span class="keyword">INTERLEAVE IN PARENT</span> Customers <span class="keyword">ON DELETE CASCADE</span>;
+  <span class="comment">-- ↑ この行がインターリーブの設定</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 データ配置の違い</h2>
+        <div class="comparison">
+            <div class="column without">
+                <h3>❌ インターリーブなし</h3>
+                <p style="text-align: center; color: #666; font-size: 14px;">親と子が別々の場所に保存される</p>
+                
+                <div class="table-box">
+                    <div class="table-name">Customers テーブル</div>
+                    <div class="row parent-row">Customer 1</div>
+                    <div class="row parent-row">Customer 2</div>
+                    <div class="row parent-row">Customer 3</div>
+                </div>
+
+                <div class="split-indicator">⬇️ 物理的に離れた場所 ⬇️</div>
+
+                <div class="table-box">
+                    <div class="table-name">Orders テーブル</div>
+                    <div class="row">Order 101 (Customer 1)</div>
+                    <div class="row">Order 102 (Customer 1)</div>
+                    <div class="row">Order 201 (Customer 2)</div>
+                    <div class="row">Order 301 (Customer 3)</div>
+                </div>
+            </div>
+
+            <div class="column with">
+                <h3>✅ インターリーブあり</h3>
+                <p style="text-align: center; color: #666; font-size: 14px;">親と子が物理的に隣接して保存される</p>
+                
+                <div class="table-box">
+                    <div class="table-name">Customers + Orders (インターリーブ)</div>
+                    <div class="row parent-row">Customer 1</div>
+                    <div class="row child-row">Order 101</div>
+                    <div class="row child-row">Order 102</div>
+                    
+                    <div class="row parent-row" style="margin-top: 10px;">Customer 2</div>
+                    <div class="row child-row">Order 201</div>
+                    
+                    <div class="row parent-row" style="margin-top: 10px;">Customer 3</div>
+                    <div class="row child-row">Order 301</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>⚡ パフォーマンスへの影響</h2>
+        <p style="text-align: center; margin-bottom: 20px;">以下のようなクエリで大きな差が出ます:</p>
+        <div class="schema-box" style="background: #fff3e0; border-color: #ff9800;">
+<span class="keyword">SELECT</span> c.Name, o.OrderId, o.TotalAmount
+<span class="keyword">FROM</span> Customers c
+<span class="keyword">JOIN</span> Orders o <span class="keyword">ON</span> c.CustomerId = o.CustomerId
+<span class="keyword">WHERE</span> c.CustomerId = <span style="color: #e91e63;">123</span>;
+        </div>
+
+        <div class="performance">
+            <div class="perf-card perf-bad">
+                <h3>インターリーブなし</h3>
+                <div class="perf-value">🐌</div>
+                <p>複数のストレージ領域から<br>データを読み取る必要がある</p>
+                <p style="font-size: 12px; color: #666;">ネットワークホップ: 多</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="perf-card perf-good">
+                <h3>インターリーブあり</h3>
+                <div class="perf-value">🚀</div>
+                <p>1回のストレージアクセスで<br>親子両方のデータを取得</p>
+                <p style="font-size: 12px; color: #666;">ネットワークホップ: 最小</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="benefits">
+            <h3>✨ インターリーブのメリット</h3>
+            <ul>
+                <li><strong>JOIN性能の向上:</strong> 親子関係のJOINクエリが最大10倍以上高速化</li>
+                <li><strong>ネットワーク負荷の削減:</strong> データが物理的に近いため、ネットワークホップが減少</li>
+                <li><strong>トランザクション効率:</strong> 親子を同時に更新するトランザクションが効率的</li>
+                <li><strong>カスケード削除:</strong> ON DELETE CASCADEで親削除時に子も自動削除</li>
+                <li><strong>データ局所性:</strong> 関連データが同じスプリット(分割単位)に配置される</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>⚠️ 注意点</h2>
+        <ul style="line-height: 1.8;">
+            <li><strong>主キーの制約:</strong> 子テーブルの主キーは親の主キーを含む必要がある</li>
+            <li><strong>階層の制限:</strong> 最大7レベルまでのネストが可能</li>
+            <li><strong>データ分散:</strong> 親レコードあたりの子レコードが多すぎるとホットスポットになる可能性</li>
+            <li><strong>設計の重要性:</strong> 後からインターリーブを追加/削除するのは困難(データ再作成が必要)</li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h2>🎯 使うべきケース</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 5px;">
+                <h4 style="color: #2e7d32; margin-top: 0;">✅ 適している</h4>
+                <ul style="font-size: 14px;">
+                    <li>顧客と注文の関係</li>
+                    <li>ブログ記事とコメント</li>
+                    <li>アルバムと楽曲</li>
+                    <li>組織と従業員</li>
+                </ul>
+            </div>
+            <div style="background: #ffebee; padding: 15px; border-radius: 5px;">
+                <h4 style="color: #c62828; margin-top: 0;">❌ 適さない</h4>
+                <ul style="font-size: 14px;">
+                    <li>多対多の関係</li>
+                    <li>頻繁に親を変更する必要がある</li>
+                    <li>子レコードが数万件以上</li>
+                    <li>独立してクエリすることが多い</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
