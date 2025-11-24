@@ -33,9 +33,9 @@ jobs:
         id: check_changes
         run: |
           if git diff --quiet docs/index.html; then
-            echo "::set-output name=changes::false"
+            echo "changes=false" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=changes::true"
+            echo "changes=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Get timestamp
@@ -46,7 +46,7 @@ jobs:
         if: steps.check_changes.outputs.changes == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'Update index.html from index.yaml'
           branch: update-index-html-${{ steps.timestamp.outputs.datetime }}
           delete-branch: true
