@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataflow スライディングウィンドウ解説</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .timeline {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+            padding: 20px 0;
+        }
+        .time-axis {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #333;
+        }
+        .time-label {
+            position: absolute;
+            bottom: -25px;
+            font-size: 12px;
+            color: #666;
+            transform: translateX(-50%);
+        }
+        .event {
+            position: absolute;
+            width: 3px;
+            height: 20px;
+            background: #4285f4;
+            bottom: 0;
+        }
+        .event-label {
+            position: absolute;
+            bottom: 25px;
+            font-size: 11px;
+            background: #e8f0fe;
+            padding: 3px 6px;
+            border-radius: 3px;
+            white-space: nowrap;
+            transform: translateX(-50%);
+        }
+        .window {
+            position: absolute;
+            height: 80px;
+            border: 2px solid #34a853;
+            border-radius: 8px;
+            background: rgba(52, 168, 83, 0.1);
+        }
+        .window-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 13px;
+            font-weight: bold;
+            color: #34a853;
+            white-space: nowrap;
+        }
+        .window-time {
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            font-size: 11px;
+            color: #34a853;
+        }
+        .window-time.end {
+            left: auto;
+            right: 0;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .window-type {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .window-type h3 {
+            margin-top: 0;
+            color: #1a73e8;
+            text-align: center;
+        }
+        .visual-demo {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            min-height: 200px;
+        }
+        .code-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .keyword {
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .string {
+            color: #c62828;
+        }
+        .comment {
+            color: #388e3c;
+        }
+        .algorithm-card {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .algorithm-card h3 {
+            color: #e65100;
+            margin-top: 0;
+        }
+        .use-case {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .use-case h4 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .pros {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .cons {
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .pros h4 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .cons h4 {
+            color: #c62828;
+            margin-top: 0;
+        }
+        .sliding-animation {
+            position: relative;
+            height: 150px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .data-stream {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .data-point {
+            width: 40px;
+            height: 40px;
+            background: #4285f4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .sliding-window-demo {
+            position: relative;
+            height: 60px;
+            margin-top: 20px;
+        }
+        .sw-window {
+            position: absolute;
+            height: 50px;
+            background: rgba(52, 168, 83, 0.2);
+            border: 2px solid #34a853;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #34a853;
+        }
+    </style>
+</head>
+<body>
+    <h1>🪟 Dataflow スライディングウィンドウ</h1>
+    <p class="subtitle">ストリーミングデータを時間枠で区切って処理する仕組み</p>
+
+    <div class="container">
+        <h2>📖 スライディングウィンドウとは</h2>
+        <p>スライディングウィンドウは、<strong>連続的に到着するストリーミングデータを、重複する時間枠に分割して集計する</strong>手法です。</p>
+        
+        <div class="sliding-animation">
+            <div class="data-stream">
+                <div class="data-point">1</div>
+                <div class="data-point">2</div>
+                <div class="data-point">3</div>
+                <div class="data-point">4</div>
+                <div class="data-point">5</div>
+                <div class="data-point">6</div>
+                <div class="data-point">7</div>
+                <div class="data-point">8</div>
+            </div>
+            <div style="font-size: 14px; color: #666; margin-bottom: 10px;">↓ 3要素のウィンドウが1つずつスライド</div>
+            <div class="sliding-window-demo">
+                <div class="sw-window" style="left: 0; width: 140px;">[1,2,3]</div>
+                <div class="sw-window" style="left: 50px; width: 140px; opacity: 0.6;">[2,3,4]</div>
+                <div class="sw-window" style="left: 100px; width: 140px; opacity: 0.3;">[3,4,5]</div>
+            </div>
+        </div>
+
+        <div class="code-box">
+<span class="comment"># Apache Beam (Dataflow) の例</span>
+<span class="keyword">from</span> apache_beam <span class="keyword">import</span> WindowInto
+<span class="keyword">from</span> apache_beam.transforms.window <span class="keyword">import</span> SlidingWindows
+
+events | WindowInto(
+    SlidingWindows(
+        size=<span class="string">60</span>,      <span class="comment"># ウィンドウサイズ: 60秒</span>
+        period=<span class="string">30</span>     <span class="comment"># スライド間隔: 30秒ごとに新しいウィンドウ</span>
+    )
+) | <span class="keyword">beam</span>.CombinePerKey(<span class="keyword">sum</span>)
+        </div>
+
+        <div style="background: #fff3e0; padding: 15px; border-radius: 5px; margin-top: 15px;">
+            <strong>🔑 重要な特徴:</strong>
+            <ul style="margin: 10px 0;">
+                <li><strong>ウィンドウサイズ (size):</strong> 各ウィンドウの時間幅</li>
+                <li><strong>スライド間隔 (period):</strong> 新しいウィンドウが開始する頻度</li>
+                <li><strong>重複:</strong> period < size の場合、ウィンドウが重複する</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 ウィンドウの動作イメージ</h2>
+        <p style="text-align: center; margin-bottom: 20px;">例: ウィンドウサイズ60秒、スライド間隔30秒</p>
+        
+        <div class="timeline">
+            <!-- 時間軸 -->
+            <div class="time-axis"></div>
+            <div class="time-label" style="left: 0%;">0秒</div>
+            <div class="time-label" style="left: 20%;">30秒</div>
+            <div class="time-label" style="left: 40%;">60秒</div>
+            <div class="time-label" style="left: 60%;">90秒</div>
+            <div class="time-label" style="left: 80%;">120秒</div>
+            <div class="time-label" style="left: 100%;">150秒</div>
+
+            <!-- イベント -->
+            <div class="event" style="left: 5%;"><div class="event-label">E1</div></div>
+            <div class="event" style="left: 15%;"><div class="event-label">E2</div></div>
+            <div class="event" style="left: 25%;"><div class="event-label">E3</div></div>
+            <div class="event" style="left: 35%;"><div class="event-label">E4</div></div>
+            <div class="event" style="left: 50%;"><div class="event-label">E5</div></div>
+            <div class="event" style="left: 65%;"><div class="event-label">E6</div></div>
+            <div class="event" style="left: 75%;"><div class="event-label">E7</div></div>
+            <div class="event" style="left: 90%;"><div class="event-label">E8</div></div>
+
+            <!-- ウィンドウ -->
+            <div class="window" style="left: 0%; width: 40%; bottom: 100px;">
+                <div class="window-label">Window 1</div>
+                <div class="window-time">0s</div>
+                <div class="window-time end">60s</div>
+            </div>
+            <div class="window" style="left: 20%; width: 40%; bottom: 200px;">
+                <div class="window-label">Window 2</div>
+                <div class="window-time">30s</div>
+                <div class="window-time end">90s</div>
+            </div>
+            <div class="window" style="left: 40%; width: 40%; bottom: 300px;">
+                <div class="window-label">Window 3</div>
+                <div class="window-time">60s</div>
+                <div class="window-time end">120s</div>
+            </div>
+        </div>
+
+        <div style="background: #e8f0fe; padding: 15px; border-radius: 5px; margin-top: 20px;">
+            <strong>💡 データの重複処理:</strong><br>
+            イベントE3は Window 1 と Window 2 の両方に含まれます。<br>
+            イベントE5は Window 2 と Window 3 の両方に含まれます。
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔄 Dataflowの主なウィンドウタイプ</h2>
+        <div class="comparison-grid">
+            <div class="window-type">
+                <h3>🪟 Fixed Window (固定ウィンドウ)</h3>
+                <div class="visual-demo">
+                    <svg width="100%" height="150" style="background: white; border-radius: 5px;">
+                        <!-- 時間軸 -->
+                        <line x1="10" y1="130" x2="390" y2="130" stroke="#333" stroke-width="2"/>
+                        <!-- ウィンドウ -->
+                        <rect x="10" y="40" width="90" height="80" fill="rgba(52, 168, 83, 0.2)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="55" y="85" text-anchor="middle" font-size="12" fill="#34a853">W1</text>
+                        <rect x="100" y="40" width="90" height="80" fill="rgba(52, 168, 83, 0.2)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="145" y="85" text-anchor="middle" font-size="12" fill="#34a853">W2</text>
+                        <rect x="190" y="40" width="90" height="80" fill="rgba(52, 168, 83, 0.2)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="235" y="85" text-anchor="middle" font-size="12" fill="#34a853">W3</text>
+                        <rect x="280" y="40" width="90" height="80" fill="rgba(52, 168, 83, 0.2)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="325" y="85" text-anchor="middle" font-size="12" fill="#34a853">W4</text>
+                    </svg>
+                </div>
+                <p style="font-size: 14px;"><strong>重複なし</strong>、各イベントは1つのウィンドウにのみ属する</p>
+            </div>
+
+            <div class="window-type">
+                <h3>🎯 Sliding Window (スライディング)</h3>
+                <div class="visual-demo">
+                    <svg width="100%" height="150" style="background: white; border-radius: 5px;">
+                        <!-- 時間軸 -->
+                        <line x1="10" y1="130" x2="390" y2="130" stroke="#333" stroke-width="2"/>
+                        <!-- ウィンドウ（重複） -->
+                        <rect x="10" y="20" width="140" height="70" fill="rgba(52, 168, 83, 0.15)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="80" y="60" text-anchor="middle" font-size="12" fill="#34a853">W1</text>
+                        <rect x="80" y="40" width="140" height="70" fill="rgba(52, 168, 83, 0.15)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="150" y="80" text-anchor="middle" font-size="12" fill="#34a853">W2</text>
+                        <rect x="150" y="60" width="140" height="70" fill="rgba(52, 168, 83, 0.15)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="220" y="100" text-anchor="middle" font-size="12" fill="#34a853">W3</text>
+                    </svg>
+                </div>
+                <p style="font-size: 14px;"><strong>重複あり</strong>、各イベントは複数のウィンドウに属する可能性</p>
+            </div>
+
+            <div class="window-type">
+                <h3>⏱️ Session Window (セッション)</h3>
+                <div class="visual-demo">
+                    <svg width="100%" height="150" style="background: white; border-radius: 5px;">
+                        <!-- 時間軸 -->
+                        <line x1="10" y1="130" x2="390" y2="130" stroke="#333" stroke-width="2"/>
+                        <!-- イベント -->
+                        <circle cx="30" cy="130" r="4" fill="#4285f4"/>
+                        <circle cx="50" cy="130" r="4" fill="#4285f4"/>
+                        <circle cx="70" cy="130" r="4" fill="#4285f4"/>
+                        <circle cx="180" cy="130" r="4" fill="#4285f4"/>
+                        <circle cx="200" cy="130" r="4" fill="#4285f4"/>
+                        <circle cx="320" cy="130" r="4" fill="#4285f4"/>
+                        <circle cx="350" cy="130" r="4" fill="#4285f4"/>
+                        <!-- ギャップベースのウィンドウ -->
+                        <rect x="20" y="50" width="70" height="70" fill="rgba(52, 168, 83, 0.2)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="55" y="90" text-anchor="middle" font-size="12" fill="#34a853">Session1</text>
+                        <rect x="170" y="50" width="50" height="70" fill="rgba(52, 168, 83, 0.2)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="195" y="90" text-anchor="middle" font-size="12" fill="#34a853">S2</text>
+                        <rect x="310" y="50" width="60" height="70" fill="rgba(52, 168, 83, 0.2)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="340" y="90" text-anchor="middle" font-size="12" fill="#34a853">S3</text>
+                    </svg>
+                </div>
+                <p style="font-size: 14px;"><strong>ギャップベース</strong>、一定時間アクティビティがないとウィンドウを閉じる</p>
+            </div>
+
+            <div class="window-type">
+                <h3>🌍 Global Window (グローバル)</h3>
+                <div class="visual-demo">
+                    <svg width="100%" height="150" style="background: white; border-radius: 5px;">
+                        <!-- 時間軸 -->
+                        <line x1="10" y1="130" x2="390" y2="130" stroke="#333" stroke-width="2"/>
+                        <!-- 1つの大きなウィンドウ -->
+                        <rect x="10" y="40" width="370" height="80" fill="rgba(52, 168, 83, 0.2)" stroke="#34a853" stroke-width="2" rx="5"/>
+                        <text x="195" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#34a853">すべてのデータ</text>
+                    </svg>
+                </div>
+                <p style="font-size: 14px;"><strong>無制限</strong>、すべてのデータが1つのウィンドウに属する</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧮 同等の概念を持つアルゴリズム</h2>
+        
+        <div class="algorithm-card">
+            <h3>1. Sliding Window Algorithm (スライディングウィンドウアルゴリズム)</h3>
+            <p><strong>分野:</strong> データ構造とアルゴリズム、競技プログラミング</p>
+            <p><strong>概要:</strong> 配列やリストに対して固定サイズの部分範囲を移動させながら処理を行う手法</p>
+            
+            <div class="code-box">
+<span class="comment"># 典型的なスライディングウィンドウアルゴリズム</span>
+<span class="keyword">def</span> max_sum_subarray(arr, k):
+    <span class="comment"># サイズkの部分配列の最大和を求める</span>
+    n = len(arr)
+    <span class="keyword">if</span> n < k:
+        <span class="keyword">return</span> <span class="keyword">None</span>
+    
+    <span class="comment"># 最初のウィンドウの和を計算</span>
+    window_sum = sum(arr[:k])
+    max_sum = window_sum
+    
+    <span class="comment"># ウィンドウをスライド</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(n - k):
+        window_sum = window_sum - arr[i] + arr[i + k]
+        max_sum = max(max_sum, window_sum)
+    
+    <span class="keyword">return</span> max_sum
+
+<span class="comment"># 例: [1, 4, 2, 10, 23, 3, 1, 0, 20] でk=4</span>
+<span class="comment"># ウィンドウ1: [1, 4, 2, 10] → 17</span>
+<span class="comment"># ウィンドウ2: [4, 2, 10, 23] → 39</span>
+<span class="comment"># ウィンドウ3: [2, 10, 23, 3] → 38</span>
+            </div>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ 共通点</h4>
+                    <ul style="font-size: 14px; margin: 5px 0;">
+                        <li>固定サイズの範囲を移動</li>
+                        <li>重複するデータを処理</li>
+                        <li>効率的な増分計算</li>
+                        <li>O(n)の時間計算量</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>⚠️ 相違点</h4>
+                    <ul style="font-size: 14px; margin: 5px 0;">
+                        <li>配列 vs ストリーム</li>
+                        <li>静的 vs 動的</li>
+                        <li>メモリ内 vs 分散処理</li>
+                        <li>同期 vs 非同期</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="algorithm-card">
+            <h3>2. Moving Average (移動平均)</h3>
+            <p><strong>分野:</strong> 統計学、時系列解析、金融工学</p>
+            <p><strong>概要:</strong> 時系列データの一定期間の平均を、時間とともに移動させながら計算</p>
+            
+            <div class="code-box">
+<span class="comment"># 単純移動平均 (SMA: Simple Moving Average)</span>
+<span class="keyword">def</span> simple_moving_average(prices, window):
+    sma = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(len(prices) - window + 1):
+        window_avg = sum(prices[i:i+window]) / window
+        sma.append(window_avg)
+    <span class="keyword">return</span> sma
+
+<span class="comment"># 例: 株価の5日移動平均</span>
+prices = [100, 102, 98, 105, 110, 108, 112]
+sma_5 = simple_moving_average(prices, 5)
+<span class="comment"># [103.0, 104.6, 106.6]</span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>移動平均の種類</th>
+                        <th>特徴</th>
+                        <th>用途</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SMA (単純移動平均)</strong></td>
+                        <td>全データ点が同じ重み</td>
+                        <td>トレンド分析、ノイズ除去</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EMA (指数移動平均)</strong></td>
+                        <td>最近のデータに高い重み</td>
+                        <td>反応速度重視の分析</td>
+                    </tr>
+                    <tr>
+                        <td><strong>WMA (加重移動平均)</strong></td>
+                        <td>線形的に重み付け</td>
+                        <td>中期的なトレンド把握</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="algorithm-card">
+            <h3>3. TCP Sliding Window (TCPスライディングウィンドウ)</h3>
+            <p><strong>分野:</strong> ネットワークプロトコル、フロー制御</p>
+            <p><strong>概要:</strong> 確認応答を待たずに送信できるデータ量を動的に調整</p>
+            
+            <div style="background: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <svg width="100%" height="180" style="border: 1px solid #ddd; border-radius: 5px;">
+                    <!-- 送信者のウィンドウ -->
+                    <text x="10" y="20" font-size="14" font-weight="bold">送信者のウィンドウ</text>
+                    <rect x="10" y="30" width="60" height="40" fill="#d3d3d3" stroke="#333"/>
+                    <text x="40" y="55" text-anchor="middle" font-size="11">送信済み</text>
+                    <rect x="70" y="30" width="120" height="40" fill="#90EE90" stroke="#333"/>
+                    <text x="130" y="55" text-anchor="middle" font-size="11">送信可能</text>
+                    <rect x="190" y="30" width="150" height="40" fill="#fff" stroke="#333"/>
+                    <text x="265" y="55" text-anchor="middle" font-size="11">送信不可</text>
+                    
+                    <!-- ACK受信でウィンドウが右にスライド -->
+                    <text x="10" y="100" font-size="12" fill="#666">ACK受信後 ↓</text>
+                    <rect x="10" y="110" width="60" height="40" fill="#d3d3d3" stroke="#333"/>
+                    <rect x="70" y="110" width="120" height="40" fill="#90EE90" stroke="#333" stroke-width="2"/>
+                    <text x="130" y="135" text-anchor="middle" font-size="11" font-weight="bold">スライド →</text>
+                    <rect x="190" y="110" width="150" height="40" fill="#fff" stroke="#333"/>
+                </svg>
+            </div>
+
+            <p style="font-size: 14px;"><strong>仕組み:</strong> 受信者の処理能力に応じてウィンドウサイズを調整し、効率的なデータ転送を実現</p>
+        </div>
+
+        <div class="algorithm-card">
+            <h3>4. Circular Buffer / Ring Buffer (リングバッファ)</h3>
+            <p><strong>分野:</strong> データ構造、組み込みシステム、音声/映像処理</p>
+            <p><strong>概要:</strong> 固定サイズのバッファを循環的に使用し、最新のN個のデータを保持</p>
+            
+            <div class="code-box">
+<span class="keyword">class</span> CircularBuffer:
+    <span class="keyword">def</span> __init__(self, size):
+        self.size = size
+        self.buffer = [<span class="keyword">None</span>] * size
+        self.head = 0
+        self.count = 0
+    
+    <span class="keyword">def</span> add(self, item):
+        self.buffer[self.head] = item
+        self.head = (self.head + 1) % self.size
+        self.count = min(self.count + 1, self.size)
+    
+    <span class="keyword">def</span> get_window(self):
+        <span class="keyword">return</span> [self.buffer[i] <span class="keyword">for</span> i <span class="keyword">in</span> range(self.count)]
+
+<span class="comment"># 最新5件のログを保持するバッファ</span>
+log_buffer = CircularBuffer(5)
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 実際のユースケース</h2>
+        
+        <div class="use-case">
+            <h4>📊 リアルタイム分析</h4>
+            <p><strong>例:</strong> 過去1分間のWebサイトアクセス数を30秒ごとに計算</p>
+            <ul style="font-size: 14px;">
+                <li>ウィンドウサイズ: 60秒</li>
+                <li>スライド間隔: 30秒</li>
+                <li>用途: ダッシュボード、アラート検知</li>
+            </ul>
+        </div>
+
+        <div class="use-case">
+            <h4>💰 金融データ処理</h4>
+            <p><strong>例:</strong> 株価の移動平均を計算してトレンドを検出</p>
+            <ul style="font-size: 14px;">
+                <li>5分移動平均、15分移動平均、1時間移動平均</li>
+                <li>ゴールデンクロス・デッドクロスの検出</li>
+                <li>高頻度取引のシグナル生成</li>
+            </ul>
+        </div>
+
+        <div class="use-case">
+            <h4>🔍 異常検知</h4>
+            <p><strong>例:</strong> サーバーメトリクスの異常な変動を検出</p>
+            <ul style="font-size: 14px;">
+                <li>過去5分間のCPU使用率の標準偏差を1分ごとに計算</li>
+                <li>しきい値を超えたらアラート発報</li>
+                <li>トラフィックスパイクの早期検知</li>
+            </ul>
+        </div>
+
+        <div class="use-case">
+            <h4>🎮 ゲーム・IoT</h4>
+            <p><strong>例:</strong> センサーデータの平滑化</p>
+            <ul style="font-size: 14px;">
+                <li>加速度センサーの値を10サンプルで平均化</li>
+                <li>ノイズ除去とジェスチャー認識</li>
+                <li>リアルタイムフィルタリング</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>⚖️ メリット・デメリット</h2>
+        <div class="pros-cons">
+            <div class="pros">
+                <h4>✅ メリット</h4>
+                <ul style="font-size: 14px;">
+                    <li><strong>滑らかな出力:</strong> 重複により急激な変化を緩和</li>
+                    <li><strong>柔軟性:</strong> size と period を調整して最適化</li>
+                    <li><strong>トレンド分析:</strong> 時間的な変化を捉えやすい</li>
+                    <li><strong>増分計算:</strong> 効率的な更新が可能</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h4>❌ デメリット</h4>
+                <ul style="font-size: 14px;">
+                    <li><strong>重複処理:</strong> 同じデータを複数回処理</li>
+                    <li><strong>遅延:</strong> ウィンドウが閉じるまで結果が出ない</li>
+                    <li><strong>リソース消費:</strong> 複数ウィンドウの管理が必要</li>
+                    <li><strong>複雑性:</strong> 設定パラメータの調整が難しい</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📚 まとめ</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>概念</th>
+                    <th>適用分野</th>
+                    <th>主な用途</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Dataflow Sliding Window</strong></td>
+                    <td>ストリーム処理</td>
+                    <td>リアルタイム分析、イベント集計</td>
+                </tr>
+                <tr>
+                    <td><strong>Sliding Window Algorithm</strong></td>
+                    <td>アルゴリズム</td>
+                    <td>部分配列問題、最適化</td>
+                </tr>
+                <tr>
+                    <td><strong>Moving Average</strong></td>
+                    <td>統計・金融</td>
+                    <td>トレンド分析、ノイズ除去</td>
+                </tr>
+                <tr>
+                    <td><strong>TCP Sliding Window</strong></td>
+                    <td>ネットワーク</td>
+                    <td>フロー制御、輻輳制御</td>
+                </tr>
+                <tr>
+                    <td><strong>Circular Buffer</strong></td>
+                    <td>データ構造</td>
+                    <td>固定サイズ履歴、ストリーミング</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 5px; margin-top: 20px;">
+            <strong>🎓 共通の核心概念:</strong>
+            <p style="margin: 10px 0;">すべての「スライディングウィンドウ」は、<strong>固定サイズの範囲を移動させながらデータを処理する</strong>という基本原理を共有しています。この概念は、効率的な増分計算と、時間的または空間的な局所性を活用するための強力なパターンです。</p>
+        </div>
+    </div>
+
+</body>
+</html>
