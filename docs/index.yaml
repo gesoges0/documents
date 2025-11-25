@@ -71,6 +71,8 @@ index:
         source: null
       - name: pardo-groupby-sideinput.html
         source: null
+      - name: tumbling-window
+        source: null
   - dir: ml
     items:
       - name: auc
