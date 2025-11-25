@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbt Incremental Model 解説</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #ff694b;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: #ff694b;
+            border-bottom: 3px solid #ff694b;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .key-point {
+            background: #fff4f2;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ff694b;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison-card {
+            background: #f8f9fa;
+            border: 3px solid;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .card-table {
+            border-color: #4caf50;
+        }
+        .card-incremental {
+            border-color: #ff694b;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .title-table {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .title-incremental {
+            background: #fff4f2;
+            color: #d84315;
+        }
+        .execution-viz {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #e0e0e0;
+        }
+        .data-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .flow-box {
+            background: white;
+            border: 3px solid;
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 150px;
+            text-align: center;
+        }
+        .box-source {
+            border-color: #2196f3;
+            background: #e3f2fd;
+        }
+        .box-target {
+            border-color: #ff694b;
+            background: #fff4f2;
+        }
+        .box-result {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+        .box-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        .box-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        .box-desc {
+            font-size: 12px;
+            color: #666;
+        }
+        .arrow {
+            font-size: 36px;
+            color: #ff694b;
+            font-weight: bold;
+        }
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .strategy-card {
+            background: #f8f9fa;
+            border: 2px solid #ff694b;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .strategy-card h4 {
+            color: #ff694b;
+            margin-top: 0;
+        }
+        .strategy-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .code-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .keyword {
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .string {
+            color: #c62828;
+        }
+        .comment {
+            color: #388e3c;
+        }
+        .function {
+            color: #7b1fa2;
+            font-weight: bold;
+        }
+        .highlight {
+            background: #fff9c4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .timeline {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .timeline-step {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #ff694b;
+        }
+        .step-number {
+            background: #ff694b;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #ff694b;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .step-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #fff4f2;
+            color: #d84315;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .warning-box strong {
+            color: #e65100;
+        }
+        .benefit-list {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .benefit-list h4 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .data-example {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .data-table {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .data-new {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+        .data-existing {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .data-updated {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        .config-section {
+            background: #f8f9fa;
+            border: 2px solid #ff694b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .config-option {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .config-option h4 {
+            color: #ff694b;
+            margin-top: 0;
+            font-size: 15px;
+        }
+        .use-case {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .use-case h4 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        .performance-comparison {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .perf-bar {
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin: 15px 0;
+            padding: 10px;
+        }
+        .perf-label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .perf-meter {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .perf-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .perf-slow {
+            background: #f44336;
+            width: 100%;
+        }
+        .perf-fast {
+            background: #4caf50;
+            width: 10%;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚡ dbt Incremental Model</h1>
+    <p class="subtitle">大量データを効率的に処理する増分更新モデル</p>
+
+    <div class="container">
+        <h2 class="section-title">📖 Incremental Modelとは</h2>
+        
+        <div class="key-point">
+            <h3 style="color: #ff694b; margin-top: 0;">🎯 概要</h3>
+            <p style="font-size: 16px; line-height: 1.8;">
+                Incremental Model（増分モデル）は、<span class="highlight">既存のテーブルに対して新規データや変更データのみを追加・更新</span>する、dbtの効率的なマテリアライゼーション方式です。
+                毎回全データを再構築するTABLEモデルと異なり、差分データだけを処理することで：
+            </p>
+            <ul style="font-size: 15px; line-height: 1.8;">
+                <li><strong>処理時間の大幅短縮:</strong> 全データではなく新規データのみ処理</li>
+                <li><strong>コスト削減:</strong> スキャン量・計算量が激減</li>
+                <li><strong>リソース効率化:</strong> データウェアハウスの負荷軽減</li>
+                <li><strong>頻繁な更新が可能:</strong> 毎時・毎分の更新も現実的に</li>
+            </ul>
+        </div>
+
+        <div class="comparison">
+            <div class="comparison-card card-table">
+                <div class="card-title title-table">🔄 TABLEモデル（フルリフレッシュ）</div>
+                
+                <div style="margin: 20px 0;">
+                    <div style="font-size: 14px; margin-bottom: 15px; font-weight: bold;">
+                        毎回全データを再構築
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 6px; border: 2px solid #4caf50;">
+                        <div style="font-size: 13px; line-height: 1.8;">
+                            <strong>Day 1:</strong> 100万行を処理 → テーブル作成<br>
+                            <strong>Day 2:</strong> 100万行を処理 → テーブル再作成<br>
+                            <strong>Day 3:</strong> 100万行を処理 → テーブル再作成<br>
+                            ...<br>
+                            <strong>Day 30:</strong> 100万行を処理 → テーブル再作成
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #ffebee; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                    <strong style="color: #c62828;">⚠️ 課題:</strong>
+                    <ul style="font-size: 13px; margin: 10px 0;">
+                        <li>データ量が増えると処理時間が線形増加</li>
+                        <li>毎回フルスキャン → 高コスト</li>
+                        <li>大量データでは実行不可能に</li>
+                        <li>頻繁な更新が困難</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="comparison-card card-incremental">
+                <div class="card-title title-incremental">⚡ Incrementalモデル（差分更新）</div>
+                
+                <div style="margin: 20px 0;">
+                    <div style="font-size: 14px; margin-bottom: 15px; font-weight: bold;">
+                        新規・変更データのみ処理
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 6px; border: 2px solid #ff694b;">
+                        <div style="font-size: 13px; line-height: 1.8;">
+                            <strong>Day 1:</strong> 100万行を処理 → テーブル作成<br>
+                            <strong>Day 2:</strong> 新規1万行のみ処理 → 追加<br>
+                            <strong>Day 3:</strong> 新規1万行のみ処理 → 追加<br>
+                            ...<br>
+                            <strong>Day 30:</strong> 新規1万行のみ処理 → 追加
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                    <strong style="color: #2e7d32;">✅ メリット:</strong>
+                    <ul style="font-size: 13px; margin: 10px 0;">
+                        <li>処理時間がほぼ一定</li>
+                        <li>差分のみスキャン → 低コスト</li>
+                        <li>大量データでも高速</li>
+                        <li>毎時・毎分の更新も可能</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🔄 Incrementalの処理フロー</h2>
+
+        <div class="timeline">
+            <h3 style="text-align: center; color: #ff694b; margin-top: 0;">初回実行と2回目以降の違い</h3>
+            
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+                <strong style="color: #1565c0;">🆕 初回実行（is_incremental() = False）</strong>
+                <div style="font-size: 14px; margin-top: 8px;">
+                    テーブルが存在しないため、フルリフレッシュと同じ動作
+                </div>
+            </div>
+            
+            <div class="timeline-step" style="border-left-color: #2196f3;">
+                <div class="step-number" style="background: #2196f3;">1</div>
+                <div class="step-content">
+                    <div class="step-title">全データを取得</div>
+                    <div class="step-desc">
+                        ソーステーブルから全レコードをSELECT。<br>
+                        <code>WHERE</code>句の増分フィルタは適用されない。
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step" style="border-left-color: #2196f3;">
+                <div class="step-number" style="background: #2196f3;">2</div>
+                <div class="step-content">
+                    <div class="step-title">テーブルを作成</div>
+                    <div class="step-desc">
+                        <code>CREATE TABLE</code>で新規テーブルを作成し、全データを挿入。<br>
+                        パーティション設定やクラスタリングも適用。
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #fff4f2; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ff694b;">
+                <strong style="color: #d84315;">⚡ 2回目以降の実行（is_incremental() = True）</strong>
+                <div style="font-size: 14px; margin-top: 8px;">
+                    テーブルが既に存在するため、差分データのみ処理
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">差分データのみ取得</div>
+                    <div class="step-desc">
+                        <code>WHERE</code>句で新規データだけフィルタリング。<br>
+                        例: <code>WHERE created_at > (SELECT MAX(created_at) FROM existing_table)</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">既存テーブルとマージ</div>
+                    <div class="step-desc">
+                        選択した戦略に応じて処理:<br>
+                        • <strong>append:</strong> 単純に追加<br>
+                        • <strong>merge:</strong> unique_keyで重複を更新<br>
+                        • <strong>delete+insert:</strong> 古いデータを削除して挿入
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">テーブルを更新</div>
+                    <div class="step-desc">
+                        差分データが既存テーブルに統合される。<br>
+                        全データの再構築は行わない。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🎯 Incremental戦略</h2>
+
+        <div style="background: #fff4f2; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <strong style="color: #d84315;">📌 戦略とは:</strong>
+            <p style="margin: 10px 0; font-size: 14px;">
+                既存データと新規データをどのように統合するかを定義する方法。<br>
+                <code>materialized='incremental'</code>と<code>incremental_strategy</code>で指定。
+            </p>
+        </div>
+
+        <div class="strategy-grid">
+            <div class="strategy-card">
+                <div class="strategy-icon">➕</div>
+                <h4>1. append（追加）</h4>
+                <div style="font-size: 14px; line-height: 1.8;">
+                    <strong>動作:</strong> 新規データを単純に追加（INSERT）<br>
+                    <strong>SQL:</strong> <code>INSERT INTO table SELECT ...</code><br>
+                    <strong>適用:</strong> イベントログ、タイムスタンプテーブル<br>
+                    <strong>注意:</strong> 重複データが発生する可能性
+                </div>
+                <div class="code-box" style="margin-top: 10px; font-size: 11px;">
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'append'</span>
+) }}
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-icon">🔀</div>
+                <h4>2. merge（マージ）</h4>
+                <div style="font-size: 14px; line-height: 1.8;">
+                    <strong>動作:</strong> unique_keyで重複チェック、更新 or 挿入<br>
+                    <strong>SQL:</strong> <code>MERGE</code>文（UPSERT）<br>
+                    <strong>適用:</strong> ディメンションテーブル、CDC<br>
+                    <strong>注意:</strong> unique_keyが必須
+                </div>
+                <div class="code-box" style="margin-top: 10px; font-size: 11px;">
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'merge'</span>,
+    unique_key=<span class="string">'id'</span>
+) }}
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-icon">🗑️</div>
+                <h4>3. delete+insert</h4>
+                <div style="font-size: 14px; line-height: 1.8;">
+                    <strong>動作:</strong> 該当期間のデータを削除して挿入<br>
+                    <strong>SQL:</strong> <code>DELETE WHERE ... INSERT ...</code><br>
+                    <strong>適用:</strong> 日次集計、期間ベース更新<br>
+                    <strong>注意:</strong> パーティション列が必要
+                </div>
+                <div class="code-box" style="margin-top: 10px; font-size: 11px;">
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'delete+insert'</span>,
+    partition_by={<span class="string">'field'</span>: <span class="string">'date'</span>}
+) }}
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-icon">📊</div>
+                <h4>4. insert_overwrite</h4>
+                <div style="font-size: 14px; line-height: 1.8;">
+                    <strong>動作:</strong> パーティション単位で上書き<br>
+                    <strong>SQL:</strong> パーティション置換<br>
+                    <strong>適用:</strong> BigQuery、Spark、Hive<br>
+                    <strong>注意:</strong> パーティションテーブル専用
+                </div>
+                <div class="code-box" style="margin-top: 10px; font-size: 11px;">
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'insert_overwrite'</span>,
+    partition_by={<span class="string">'field'</span>: <span class="string">'date'</span>}
+) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">💻 実装例</h2>
+
+        <h3 style="color: #ff694b;">1. 基本的なIncremental Model（append戦略）</h3>
+        <div class="code-box">
+<span class="comment">-- models/events_incremental.sql</span>
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'append'</span>,
+    partition_by={
+        <span class="string">'field'</span>: <span class="string">'event_date'</span>,
+        <span class="string">'data_type'</span>: <span class="string">'date'</span>,
+        <span class="string">'granularity'</span>: <span class="string">'day'</span>
+    },
+    cluster_by=[<span class="string">'user_id'</span>, <span class="string">'event_type'</span>]
+) }}
+
+<span class="keyword">SELECT</span>
+    event_id,
+    user_id,
+    event_type,
+    event_timestamp,
+    <span class="function">DATE</span>(event_timestamp) <span class="keyword">AS</span> event_date,
+    properties
+<span class="keyword">FROM</span> {{ <span class="function">source</span>(<span class="string">'raw'</span>, <span class="string">'events'</span>) }}
+
+<span class="comment">-- 増分フィルタ: 2回目以降のみ適用</span>
+{% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+    <span class="keyword">WHERE</span> event_timestamp > (<span class="keyword">SELECT MAX</span>(event_timestamp) <span class="keyword">FROM</span> {{ <span class="keyword">this</span> }})
+{% <span class="keyword">endif</span> %}
+        </div>
+
+        <h3 style="color: #ff694b; margin-top: 30px;">2. merge戦略（ディメンションテーブル）</h3>
+        <div class="code-box">
+<span class="comment">-- models/dim_customers_incremental.sql</span>
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'merge'</span>,
+    unique_key=<span class="string">'customer_id'</span>,
+    merge_update_columns=[<span class="string">'name'</span>, <span class="string">'email'</span>, <span class="string">'updated_at'</span>]
+) }}
+
+<span class="keyword">SELECT</span>
+    customer_id,
+    name,
+    email,
+    created_at,
+    updated_at
+<span class="keyword">FROM</span> {{ <span class="function">source</span>(<span class="string">'raw'</span>, <span class="string">'customers'</span>) }}
+
+{% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+    <span class="comment">-- 更新されたレコードのみ取得</span>
+    <span class="keyword">WHERE</span> updated_at > (<span class="keyword">SELECT MAX</span>(updated_at) <span class="keyword">FROM</span> {{ <span class="keyword">this</span> }})
+{% <span class="keyword">endif</span> %}
+        </div>
+
+        <h3 style="color: #ff694b; margin-top: 30px;">3. delete+insert戦略（日次集計）</h3>
+        <div class="code-box">
+<span class="comment">-- models/fct_daily_sales.sql</span>
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'delete+insert'</span>,
+    partition_by={
+        <span class="string">'field'</span>: <span class="string">'sale_date'</span>,
+        <span class="string">'data_type'</span>: <span class="string">'date'</span>
+    }
+) }}
+
+<span class="keyword">SELECT</span>
+    <span class="function">DATE</span>(sale_timestamp) <span class="keyword">AS</span> sale_date,
+    product_id,
+    <span class="function">SUM</span>(quantity) <span class="keyword">AS</span> total_quantity,
+    <span class="function">SUM</span>(amount) <span class="keyword">AS</span> total_amount,
+    <span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> customer_id) <span class="keyword">AS</span> unique_customers
+<span class="keyword">FROM</span> {{ <span class="function">ref</span>(<span class="string">'stg_sales'</span>) }}
+
+{% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+    <span class="comment">-- 過去7日分を再計算（遅延データ対応）</span>
+    <span class="keyword">WHERE</span> <span class="function">DATE</span>(sale_timestamp) >= <span class="function">DATE_SUB</span>(<span class="function">CURRENT_DATE</span>(), <span class="keyword">INTERVAL</span> <span class="number">7</span> <span class="keyword">DAY</span>)
+{% <span class="keyword">endif</span> %}
+
+<span class="keyword">GROUP BY</span> <span class="number">1</span>, <span class="number">2</span>
+        </div>
+
+        <h3 style="color: #ff694b; margin-top: 30px;">4. 複合キーでのmerge</h3>
+        <div class="code-box">
+<span class="comment">-- models/fct_order_items.sql</span>
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'merge'</span>,
+    unique_key=[<span class="string">'order_id'</span>, <span class="string">'item_id'</span>],  <span class="comment">-- 複合キー</span>
+    partition_by={<span class="string">'field'</span>: <span class="string">'order_date'</span>, <span class="string">'data_type'</span>: <span class="string">'date'</span>}
+) }}
+
+<span class="keyword">SELECT</span>
+    order_id,
+    item_id,
+    order_date,
+    quantity,
+    price,
+    discount,
+    updated_at
+<span class="keyword">FROM</span> {{ <span class="function">source</span>(<span class="string">'raw'</span>, <span class="string">'order_items'</span>) }}
+
+{% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+    <span class="keyword">WHERE</span> updated_at > (<span class="keyword">SELECT MAX</span>(updated_at) <span class="keyword">FROM</span> {{ <span class="keyword">this</span> }})
+{% <span class="keyword">endif</span> %}
+        </div>
+
+        <h3 style="color: #ff694b; margin-top: 30px;">5. insert_overwrite戦略（BigQuery）</h3>
+        <div class="code-box">
+<span class="comment">-- models/fct_hourly_metrics.sql</span>
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'insert_overwrite'</span>,
+    partition_by={
+        <span class="string">'field'</span>: <span class="string">'metric_hour'</span>,
+        <span class="string">'data_type'</span>: <span class="string">'timestamp'</span>,
+        <span class="string">'granularity'</span>: <span class="string">'hour'</span>
+    }
+) }}
+
+<span class="keyword">SELECT</span>
+    <span class="function">TIMESTAMP_TRUNC</span>(event_timestamp, <span class="keyword">HOUR</span>) <span class="keyword">AS</span> metric_hour,
+    metric_name,
+    <span class="function">AVG</span>(metric_value) <span class="keyword">AS</span> avg_value,
+    <span class="function">MAX</span>(metric_value) <span class="keyword">AS</span> max_value,
+    <span class="function">COUNT</span>(*) <span class="keyword">AS</span> count_events
+<span class="keyword">FROM</span> {{ <span class="function">ref</span>(<span class="string">'stg_metrics'</span>) }}
+
+{% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+    <span class="comment">-- 過去24時間分のパーティションを上書き</span>
+    <span class="keyword">WHERE</span> metric_hour >= <span class="function">TIMESTAMP_SUB</span>(<span class="function">CURRENT_TIMESTAMP</span>(), <span class="keyword">INTERVAL</span> <span class="number">24</span> <span class="keyword">HOUR</span>)
+{% <span class="keyword">endif</span> %}
+
+<span class="keyword">GROUP BY</span> <span class="number">1</span>, <span class="number">2</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">⚙️ 重要な設定オプション</h2>
+
+        <div class="config-section">
+            <h3 style="color: #ff694b; margin-top: 0;">主要な設定パラメータ</h3>
+
+            <div class="config-option">
+                <h4>materialized</h4>
+                <div style="font-size: 14px;">
+                    <code>'incremental'</code> を指定して増分モデルを有効化
+                </div>
+            </div>
+
+            <div class="config-option">
+                <h4>incremental_strategy</h4>
+                <div style="font-size: 14px;">
+                    データ統合方法を指定:<br>
+                    • <code>'append'</code>: 追加のみ<br>
+                    • <code>'merge'</code>: UPSERT（更新 or 挿入）<br>
+                    • <code>'delete+insert'</code>: 削除してから挿入<br>
+                    • <code>'insert_overwrite'</code>: パーティション上書き
+                </div>
+            </div>
+
+            <div class="config-option">
+                <h4>unique_key</h4>
+                <div style="font-size: 14px;">
+                    merge戦略で重複判定に使用するキー。<br>
+                    単一カラム: <code>'user_id'</code><br>
+                    複合キー: <code>['order_id', 'item_id']</code>
+                </div>
+            </div>
+
+            <div class="config-option">
+                <h4>partition_by</h4>
+                <div style="font-size: 14px;">
+                    パーティション設定（BigQuery）:<br>
+                    <code>{'field': 'date', 'data_type': 'date', 'granularity': 'day'}</code>
+                </div>
+            </div>
+
+            <div class="config-option">
+                <h4>cluster_by</h4>
+                <div style="font-size: 14px;">
+                    クラスタリング設定（BigQuery）:<br>
+                    <code>['user_id', 'product_id']</code>
+                </div>
+            </div>
+
+            <div class="config-option">
+                <h4>on_schema_change</h4>
+                <div style="font-size: 14px;">
+                    スキーマ変更時の動作:<br>
+                    • <code>'ignore'</code>: 変更を無視（デフォルト）<br>
+                    • <code>'fail'</code>: エラーで停止<br>
+                    • <code>'append_new_columns'</code>: 新カラムを追加<br>
+                    • <code>'sync_all_columns'</code>: 全カラムを同期
+                </div>
+            </div>
+
+            <div class="config-option">
+                <h4>full_refresh</h4>
+                <div style="font-size: 14px;">
+                    フルリフレッシュを強制:<br>
+                    コマンド: <code>dbt run --full-refresh</code><br>
+                    テーブルを削除して再作成
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">📊 パフォーマンス比較</h2>
+
+        <div class="performance-comparison">
+            <h3 style="text-align: center; color: #ff694b; margin-top: 0;">実行時間とコストの比較</h3>
+            
+            <div style="background: #e8f0fe; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <strong>シナリオ:</strong> 10億行のイベントテーブル、日次で100万行の新規データ追加
+            </div>
+
+            <div class="perf-bar">
+                <div class="perf-label">TABLEモデル（フルリフレッシュ）</div>
+                <div class="perf-meter">
+                    <div class="perf-fill perf-slow">
+                        処理時間: 45分 | コスト: $50 | スキャン: 500 GB
+                    </div>
+                </div>
+            </div>
+
+            <div class="perf-bar">
+                <div class="perf-label">Incrementalモデル（差分更新）</div>
+                <div class="perf-meter">
+                    <div class="perf-fill perf-fast">
+                        処理時間: 2分 | コスト: $0.5 | スキャン: 5 GB
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>指標</th>
+                            <th>TABLEモデル</th>
+                            <th>Incrementalモデル</th>
+                            <th>改善率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>初回実行</strong></td>
+                            <td>45分</td>
+                            <td>45分</td>
+                            <td>同じ</td>
+                        </tr>
+                        <tr>
+                            <td><strong>2回目以降</strong></td>
+                            <td>45分</td>
+                            <td>2分</td>
+                            <td><strong>95%短縮</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>スキャン量</strong></td>
+                            <td>500 GB</td>
+                            <td>5 GB</td>
+                            <td><strong>99%削減</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>コスト/日</strong></td>
+                            <td>$50</td>
+                            <td>$0.5</td>
+                            <td><strong>99%削減</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>月間コスト</strong></td>
+                            <td>$1,500</td>
+                            <td>$15</td>
+                            <td><strong>$1,485節約</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🎯 ユースケース</h2>
+
+        <div class="use-case">
+            <h4>1️⃣ イベントログの蓄積</h4>
+            <p><strong>シナリオ:</strong> Webアプリのクリックストリームデータを蓄積</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>戦略: <code>append</code></li>
+                    <li>パーティション: <code>event_date</code></li>
+                    <li>フィルタ: <code>WHERE event_timestamp > MAX(event_timestamp)</code></li>
+                    <li>頻度: 毎時実行</li>
+                </ul>
+                <strong>効果:</strong> 毎時数百万件のイベントを高速処理、低コスト
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>2️⃣ 顧客マスタの更新</h4>
+            <p><strong>シナリオ:</strong> CRMからの顧客データをデータウェアハウスに同期</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>戦略: <code>merge</code></li>
+                    <li>unique_key: <code>customer_id</code></li>
+                    <li>フィルタ: <code>WHERE updated_at > MAX(updated_at)</code></li>
+                    <li>頻度: 毎15分実行</li>
+                </ul>
+                <strong>効果:</strong> 変更された顧客データのみ更新、リアルタイムに近い同期
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>3️⃣ 日次売上集計</h4>
+            <p><strong>シナリオ:</strong> 日別・商品別の売上サマリを計算</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>戦略: <code>delete+insert</code></li>
+                    <li>パーティション: <code>sale_date</code></li>
+                    <li>フィルタ: 過去7日分を再計算（遅延データ対応）</li>
+                    <li>頻度: 毎日1回実行</li>
+                </ul>
+                <strong>効果:</strong> 遅延到着データも正確に反映、過去分も再計算可能
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>4️⃣ CDC（Change Data Capture）</h4>
+            <p><strong>シナリオ:</strong> データベースの変更ログをキャプチャ</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>戦略: <code>merge</code></li>
+                    <li>unique_key: プライマリキー</li>
+                    <li>フィルタ: <code>WHERE log_timestamp > MAX(log_timestamp)</code></li>
+                    <li>削除フラグ: <code>is_incremental() and is_deleted</code>で削除処理</li>
+                </ul>
+                <strong>効果:</strong> データベースの変更をリアルタイムに反映
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>5️⃣ 時系列メトリクス</h4>
+            <p><strong>シナリオ:</strong> 1時間ごとのシステムメトリクスを集計</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>戦略: <code>insert_overwrite</code></li>
+                    <li>パーティション: <code>metric_hour</code>（hourly granularity）</li>
+                    <li>フィルタ: 過去24時間分を再計算</li>
+                    <li>頻度: 毎時実行</li>
+                </ul>
+                <strong>効果:</strong> 時間単位でパーティションを上書き、効率的な更新
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">⚠️ 注意点とベストプラクティス</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>推奨事項</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>フィルタ条件</strong></td>
+                    <td>必ず<code>{% if is_incremental() %}</code>内にWHERE句を記述。初回実行では全データ取得が必要</td>
+                </tr>
+                <tr>
+                    <td><strong>パーティション設定</strong></td>
+                    <td>日付カラムでパーティション化すると、delete+insertやinsert_overwriteが効率的</td>
+                </tr>
+                <tr>
+                    <td><strong>unique_key選択</strong></td>
+                    <td>merge戦略では適切なキーを選択。複合キーも可能</td>
+                </tr>
+                <tr>
+                    <td><strong>遅延データ対応</strong></td>
+                    <td>過去数日分をlookback_windowで再処理することで遅延データをキャッチ</td>
+                </tr>
+                <tr>
+                    <td><strong>フルリフレッシュ</strong></td>
+                    <td>定期的に<code>--full-refresh</code>でテーブルを再構築し、データ品質を維持</td>
+                </tr>
+                <tr>
+                    <td><strong>モニタリング</strong></td>
+                    <td>処理行数、実行時間、エラー率を監視。異常があればフルリフレッシュ</td>
+                </tr>
+                <tr>
+                    <td><strong>スキーマ変更</strong></td>
+                    <td><code>on_schema_change</code>を適切に設定し、カラム追加・削除に対応</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warning-box">
+            <strong>🚨 Incrementalが適さないケース:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li><strong>小規模データ:</strong> 数千〜数万行程度ならTABLEモデルで十分</li>
+                <li><strong>複雑なJOIN:</strong> 上流テーブルの変更を検知しにくい場合はTABLEが安全</li>
+                <li><strong>全行再計算が必要:</strong> ウィンドウ関数で全データが必要な場合</li>
+                <li><strong>頻繁なスキーマ変更:</strong> 開発初期段階ではTABLEが柔軟</li>
+            </ul>
+        </div>
+
+        <div class="benefit-list">
+            <h4>✅ Incrementalを使うべきケース</h4>
+            <ul style="font-size: 14px; line-height: 1.8;">
+                <li>データ量が数百万行以上</li>
+                <li>日々新しいデータが追加される</li>
+                <li>フルリフレッシュに時間がかかりすぎる（30分以上）</li>
+                <li>頻繁な更新が必要（毎時・毎分）</li>
+                <li>コスト削減が重要</li>
+                <li>タイムスタンプやシーケンス番号で増分を識別可能</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🔧 高度なテクニック</h2>
+
+        <h3 style="color: #ff694b;">1. Lookback Window（遅延データ対応）</h3>
+        <div class="code-box">
+<span class="comment">-- 過去7日分を常に再計算して遅延データをキャッチ</span>
+{% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+    <span class="keyword">WHERE</span> event_date >= <span class="function">DATE_SUB</span>(<span class="function">CURRENT_DATE</span>(), <span class="keyword">INTERVAL</span> <span class="number">7</span> <span class="keyword">DAY</span>)
+{% <span class="keyword">endif</span> %}
+        </div>
+
+        <h3 style="color: #ff694b; margin-top: 20px;">2. 条件付きロジック</h3>
+        <div class="code-box">
+<span class="comment">-- 初回実行時のみ履歴データ全体を取得、2回目以降は差分のみ</span>
+{% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+    <span class="keyword">WHERE</span> updated_at > (<span class="keyword">SELECT MAX</span>(updated_at) <span class="keyword">FROM</span> {{ <span class="keyword">this</span> }})
+{% <span class="keyword">else</span> %}
+    <span class="comment">-- 初回は過去1年分のみ取得（全データは不要な場合）</span>
+    <span class="keyword">WHERE</span> updated_at >= <span class="function">DATE_SUB</span>(<span class="function">CURRENT_DATE</span>(), <span class="keyword">INTERVAL</span> <span class="number">1</span> <span class="keyword">YEAR</span>)
+{% <span class="keyword">endif</span> %}
+        </div>
+
+        <h3 style="color: #ff694b; margin-top: 20px;">3. 削除レコードの処理</h3>
+        <div class="code-box">
+<span class="comment">-- 論理削除フラグを使用</span>
+{{ <span class="function">config</span>(
+    materialized=<span class="string">'incremental'</span>,
+    incremental_strategy=<span class="string">'merge'</span>,
+    unique_key=<span class="string">'id'</span>
+) }}
+
+<span class="keyword">SELECT</span>
+    id,
+    name,
+    is_deleted,
+    updated_at
+<span class="keyword">FROM</span> {{ <span class="function">source</span>(<span class="string">'raw'</span>, <span class="string">'users'</span>) }}
+
+{% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+    <span class="keyword">WHERE</span> updated_at > (<span class="keyword">SELECT MAX</span>(updated_at) <span class="keyword">FROM</span> {{ <span class="keyword">this</span> }})
+    <span class="comment">-- 削除されたレコードも含める</span>
+    <span class="keyword">OR</span> is_deleted = <span class="keyword">TRUE</span>
+{% <span class="keyword">endif</span> %}
+        </div>
+
+        <h3 style="color: #ff694b; margin-top: 20px;">4. カスタムマクロでの共通化</h3>
+        <div class="code-box">
+<span class="comment">-- macros/incremental_filter.sql</span>
+{% <span class="keyword">macro</span> incremental_filter(column_name, lookback_days=0) %}
+    {% <span class="keyword">if</span> <span class="function">is_incremental</span>() %}
+        <span class="keyword">WHERE</span> {{ column_name }} > (
+            <span class="keyword">SELECT</span> <span class="function">DATE_SUB</span>(<span class="function">MAX</span>({{ column_name }}), <span class="keyword">INTERVAL</span> {{ lookback_days }} <span class="keyword">DAY</span>)
+            <span class="keyword">FROM</span> {{ <span class="keyword">this</span> }}
+        )
+    {% <span class="keyword">endif</span> %}
+{% <span class="keyword">endmacro</span> %}
+
+<span class="comment">-- models/my_model.sql</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> {{ <span class="function">source</span>(<span class="string">'raw'</span>, <span class="string">'events'</span>) }}
+{{ <span class="function">incremental_filter</span>(<span class="string">'event_date'</span>, lookback_days=7) }}
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📚 まとめ</h2>
+        <div style="background: #fff4f2; padding: 20px; border-radius: 8px; border-left: 4px solid #ff694b;">
+            <h3 style="color: #d84315; margin-top: 0;">🎓 dbt Incremental Modelの重要ポイント</h3>
+            
+            <ul style="line-height: 1.8;">
+                <li><strong>目的:</strong> 大量データを効率的に処理、コストと時間を大幅削減</li>
+                <li><strong>仕組み:</strong> 初回は全データ、2回目以降は差分のみ処理</li>
+                <li><strong>戦略:</strong> append（追加）、merge（UPSERT）、delete+insert、insert_overwrite</li>
+                <li><strong>必須設定:</strong> <code>materialized='incremental'</code>、<code>is_incremental()</code>でフィルタ</li>
+                <li><strong>パフォーマンス:</strong> 処理時間99%短縮、コスト99%削減も可能</li>
+                <li><strong>適用場面:</strong> イベントログ、ディメンション更新、日次集計、CDC</li>
+            </ul>
+
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                <strong style="color: #2e7d32;">💡 使い分けの基準:</strong>
+                <ul style="margin: 10px 0; font-size: 14px;">
+                    <li><strong>TABLE:</strong> 小規模データ（〜数十万行）、開発初期、複雑なロジック</li>
+                    <li><strong>INCREMENTAL:</strong> 大規模データ（数百万行以上）、頻繁な更新、コスト重視</li>
+                    <li><strong>VIEW:</strong> 軽量な変換のみ、常に最新データが必要</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 18px; font-weight: bold; color: #d84315;">
+                Incremental Modelにより、<br>
+                大規模データパイプラインを高速・低コストで実現できます！
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
