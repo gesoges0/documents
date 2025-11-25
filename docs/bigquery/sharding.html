@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery シャーディング 解説</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #4285f4;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: #4285f4;
+            border-bottom: 3px solid #4285f4;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .key-point {
+            background: #e8f0fe;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #4285f4;
+        }
+        .sharding-viz {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #e0e0e0;
+        }
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .table-card {
+            background: white;
+            border: 3px solid #4285f4;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .table-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .table-name {
+            font-weight: bold;
+            font-size: 13px;
+            color: #1a73e8;
+            margin-bottom: 5px;
+        }
+        .table-rows {
+            font-size: 11px;
+            color: #666;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison-card {
+            background: #f8f9fa;
+            border: 3px solid;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .card-sharding {
+            border-color: #ff9800;
+        }
+        .card-partition {
+            border-color: #4caf50;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .title-sharding {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .title-partition {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .code-box {
+            background: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            margin: 15px 0;
+            overflow-x: auto;
+            color: #d4d4d4;
+        }
+        .keyword {
+            color: #569cd6;
+            font-weight: bold;
+        }
+        .string {
+            color: #ce9178;
+        }
+        .comment {
+            color: #6a9955;
+            font-style: italic;
+        }
+        .function {
+            color: #dcdcaa;
+            font-weight: bold;
+        }
+        .highlight {
+            background: #fff9c4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .warning-box strong {
+            color: #e65100;
+        }
+        .deprecated-box {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .deprecated-box strong {
+            color: #c62828;
+        }
+        .benefit-list {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .benefit-list h4 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .query-example {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .query-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .query-box {
+            background: #1e1e1e;
+            border: 2px solid;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #d4d4d4;
+        }
+        .query-bad {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+        .query-good {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+        .migration-flow {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .migration-step {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #4285f4;
+        }
+        .step-number {
+            background: #4285f4;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #4285f4;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .step-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.8;
+        }
+        .wildcard-example {
+            background: #e8f0fe;
+            border-left: 4px solid #4285f4;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .wildcard-example h4 {
+            color: #1565c0;
+            margin-top: 0;
+        }
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .pattern-card {
+            background: white;
+            border: 2px solid #4285f4;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .pattern-card h4 {
+            color: #4285f4;
+            margin-top: 0;
+            font-size: 14px;
+        }
+        .arrow-down {
+            text-align: center;
+            font-size: 32px;
+            color: #4caf50;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔀 BigQuery シャーディング</h1>
+    <p class="subtitle">日付ベースのテーブル分割とパーティショニングへの移行</p>
+
+    <div class="container">
+        <h2 class="section-title">📖 シャーディングとは</h2>
+        
+        <div class="key-point">
+            <h3 style="color: #4285f4; margin-top: 0;">🎯 概要</h3>
+            <p style="font-size: 16px; line-height: 1.8;">
+                BigQueryのシャーディング（Table Sharding）は、<span class="highlight">日付や時間ごとに個別のテーブルを作成してデータを分散保存</span>する古い手法です。
+                例えば、日次でテーブルを分割する場合：
+            </p>
+            <ul style="font-size: 15px; line-height: 1.8;">
+                <li><code>events_20241120</code> - 2024年11月20日のデータ</li>
+                <li><code>events_20241121</code> - 2024年11月21日のデータ</li>
+                <li><code>events_20241122</code> - 2024年11月22日のデータ</li>
+                <li>...</li>
+            </ul>
+        </div>
+
+        <div class="deprecated-box">
+            <strong>⚠️ 重要: シャーディングは非推奨（Legacy）</strong>
+            <p style="margin: 10px 0; font-size: 14px;">
+                シャーディングは<strong>レガシーな手法</strong>として扱われており、Googleは<strong>パーティションテーブル（Partitioned Tables）への移行を強く推奨</strong>しています。<br>
+                新規プロジェクトでは絶対にシャーディングを使用せず、既存のシャーディングテーブルは早急にパーティショニングに移行すべきです。
+            </p>
+        </div>
+
+        <div class="sharding-viz">
+            <h3 style="text-align: center; color: #4285f4; margin-top: 0;">シャーディングの構造</h3>
+            
+            <div style="background: #fff3e0; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <strong style="color: #e65100;">シャーディング例:</strong> 日次イベントログテーブル
+            </div>
+
+            <div class="table-grid">
+                <div class="table-card">
+                    <div class="table-icon">📋</div>
+                    <div class="table-name">events_20241101</div>
+                    <div class="table-rows">100万行</div>
+                </div>
+                <div class="table-card">
+                    <div class="table-icon">📋</div>
+                    <div class="table-name">events_20241102</div>
+                    <div class="table-rows">95万行</div>
+                </div>
+                <div class="table-card">
+                    <div class="table-icon">📋</div>
+                    <div class="table-name">events_20241103</div>
+                    <div class="table-rows">110万行</div>
+                </div>
+                <div class="table-card">
+                    <div class="table-icon">📋</div>
+                    <div class="table-name">events_20241104</div>
+                    <div class="table-rows">105万行</div>
+                </div>
+                <div class="table-card">
+                    <div class="table-icon">📋</div>
+                    <div class="table-name">events_20241105</div>
+                    <div class="table-rows">98万行</div>
+                </div>
+                <div class="table-card">
+                    <div class="table-icon">📋</div>
+                    <div class="table-name">...</div>
+                    <div class="table-rows">継続</div>
+                </div>
+            </div>
+
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <strong style="color: #2e7d32;">📊 特徴:</strong>
+                <ul style="font-size: 13px; margin: 10px 0;">
+                    <li>1日ごとに独立したテーブルが作成される</li>
+                    <li>各テーブルは完全に独立したメタデータを持つ</li>
+                    <li>命名規則: <code>table_YYYYMMDD</code>形式</li>
+                    <li>1年で365個のテーブルが作成される</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🆚 シャーディング vs パーティショニング</h2>
+
+        <div class="comparison">
+            <div class="comparison-card card-sharding">
+                <div class="card-title title-sharding">❌ シャーディング（非推奨）</div>
+                
+                <div style="margin: 20px 0;">
+                    <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">
+                        日付ごとに別テーブル
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 6px;">
+                        <div style="font-size: 13px; line-height: 1.8;">
+                            <strong>構造:</strong><br>
+                            • events_20241120<br>
+                            • events_20241121<br>
+                            • events_20241122<br>
+                            • ...<br>
+                            <br>
+                            各テーブルは独立したエンティティ
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #ffebee; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                    <strong style="color: #c62828;">⚠️ デメリット:</strong>
+                    <ul style="font-size: 13px; margin: 10px 0;">
+                        <li>テーブル数の爆発（365個/年）</li>
+                        <li>クエリが複雑（UNION必須）</li>
+                        <li>メタデータ管理のオーバーヘッド</li>
+                        <li>テーブル作成・削除の手間</li>
+                        <li>スキーマ変更が困難</li>
+                        <li>パフォーマンスが劣る</li>
+                        <li>1テーブルに対する操作制限</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="comparison-card card-partition">
+                <div class="card-title title-partition">✅ パーティショニング（推奨）</div>
+                
+                <div style="margin: 20px 0;">
+                    <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">
+                        1つのテーブル、内部で分割
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 6px;">
+                        <div style="font-size: 13px; line-height: 1.8;">
+                            <strong>構造:</strong><br>
+                            • events（1つのテーブル）<br>
+                            &nbsp;&nbsp;├ partition 2024-11-20<br>
+                            &nbsp;&nbsp;├ partition 2024-11-21<br>
+                            &nbsp;&nbsp;├ partition 2024-11-22<br>
+                            &nbsp;&nbsp;└ ...<br>
+                            <br>
+                            1つのテーブル、内部でパーティション分割
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                    <strong style="color: #2e7d32;">✅ メリット:</strong>
+                    <ul style="font-size: 13px; margin: 10px 0;">
+                        <li>テーブルは1つだけ</li>
+                        <li>シンプルなクエリ（UNION不要）</li>
+                        <li>自動パーティション管理</li>
+                        <li>高速なパーティションプルーニング</li>
+                        <li>スキーマ変更が容易</li>
+                        <li>優れたパフォーマンス</li>
+                        <li>クラスタリングとの組み合わせ</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">❌ シャーディングの問題点</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>問題</th>
+                    <th>詳細</th>
+                    <th>影響</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>テーブル数の爆発</strong></td>
+                    <td>1日1テーブルで年間365個、複数年で数千個のテーブル</td>
+                    <td>管理コスト増大、可視性低下</td>
+                </tr>
+                <tr>
+                    <td><strong>クエリの複雑化</strong></td>
+                    <td>複数日のデータを取得するにはUNION ALLが必須</td>
+                    <td>クエリ作成が面倒、エラーリスク増加</td>
+                </tr>
+                <tr>
+                    <td><strong>メタデータオーバーヘッド</strong></td>
+                    <td>各テーブルが独立したメタデータを持つ</td>
+                    <td>メタデータ取得が遅い、API制限に到達</td>
+                </tr>
+                <tr>
+                    <td><strong>スキーマ変更の困難さ</strong></td>
+                    <td>全テーブルに対して個別にALTER TABLEが必要</td>
+                    <td>大量のDDL実行、時間とコストがかかる</td>
+                </tr>
+                <tr>
+                    <td><strong>パフォーマンス</strong></td>
+                    <td>ワイルドカードテーブルのスキャンが非効率</td>
+                    <td>パーティションプルーニングより遅い</td>
+                </tr>
+                <tr>
+                    <td><strong>運用の煩雑さ</strong></td>
+                    <td>テーブルの作成・削除を手動または自動化が必要</td>
+                    <td>運用負荷増大、ミスのリスク</td>
+                </tr>
+                <tr>
+                    <td><strong>コスト管理</strong></td>
+                    <td>古いテーブルの削除を忘れるとストレージコスト増加</td>
+                    <td>予期しないコスト発生</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🔍 ワイルドカードテーブルを使ったクエリ</h2>
+
+        <div style="background: #e8f0fe; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <strong style="color: #1565c0;">📌 ワイルドカードテーブルとは:</strong>
+            <p style="margin: 10px 0; font-size: 14px;">
+                シャーディングされた複数のテーブルを1つのクエリでまとめて検索する機能。<br>
+                <code>_TABLE_SUFFIX</code>擬似カラムで日付フィルタリングが可能。
+            </p>
+        </div>
+
+        <h3 style="color: #4285f4;">基本的なワイルドカードクエリ</h3>
+        <div class="code-box">
+<span class="comment">-- 全てのevents_*テーブルを検索</span>
+<span class="keyword">SELECT</span>
+    _TABLE_SUFFIX <span class="keyword">AS</span> table_date,  <span class="comment">-- テーブル名のサフィックス部分</span>
+    event_id,
+    user_id,
+    event_type,
+    event_timestamp
+<span class="keyword">FROM</span> <span class="string">`project.dataset.events_*`</span>
+<span class="keyword">WHERE</span> 
+    <span class="comment">-- _TABLE_SUFFIXで日付範囲を指定（文字列比較）</span>
+    _TABLE_SUFFIX <span class="keyword">BETWEEN</span> <span class="string">'20241120'</span> <span class="keyword">AND</span> <span class="string">'20241125'</span>
+    <span class="keyword">AND</span> event_type = <span class="string">'purchase'</span>
+<span class="keyword">ORDER BY</span> event_timestamp <span class="keyword">DESC</span>
+<span class="keyword">LIMIT</span> <span class="number">1000</span>
+        </div>
+
+        <div class="wildcard-example">
+            <h4>ワイルドカードパターン</h4>
+            <div class="pattern-grid">
+                <div class="pattern-card">
+                    <h4>全テーブル</h4>
+                    <code>events_*</code><br>
+                    <span style="font-size: 12px; color: #666;">全てのevents_XXXテーブル</span>
+                </div>
+                <div class="pattern-card">
+                    <h4>年月指定</h4>
+                    <code>events_202411*</code><br>
+                    <span style="font-size: 12px; color: #666;">2024年11月のテーブルのみ</span>
+                </div>
+                <div class="pattern-card">
+                    <h4>範囲指定</h4>
+                    <code>_TABLE_SUFFIX BETWEEN 'X' AND 'Y'</code><br>
+                    <span style="font-size: 12px; color: #666;">WHERE句で範囲フィルタ</span>
+                </div>
+                <div class="pattern-card">
+                    <h4>複数パターン</h4>
+                    <code>events_2024*, logs_2024*</code><br>
+                    <span style="font-size: 12px; color: #666;">複数のテーブルパターン</span>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="color: #4285f4; margin-top: 30px;">日付範囲でのクエリ例</h3>
+        <div class="code-box">
+<span class="comment">-- 過去7日間のデータを集計</span>
+<span class="keyword">SELECT</span>
+    <span class="function">PARSE_DATE</span>(<span class="string">'%Y%m%d'</span>, _TABLE_SUFFIX) <span class="keyword">AS</span> event_date,
+    <span class="function">COUNT</span>(*) <span class="keyword">AS</span> total_events,
+    <span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> user_id) <span class="keyword">AS</span> unique_users
+<span class="keyword">FROM</span> <span class="string">`project.dataset.events_*`</span>
+<span class="keyword">WHERE</span>
+    <span class="comment">-- 過去7日分のテーブルのみスキャン</span>
+    _TABLE_SUFFIX <span class="keyword">BETWEEN</span> 
+        <span class="function">FORMAT_DATE</span>(<span class="string">'%Y%m%d'</span>, <span class="function">DATE_SUB</span>(<span class="function">CURRENT_DATE</span>(), <span class="keyword">INTERVAL</span> <span class="number">7</span> <span class="keyword">DAY</span>))
+        <span class="keyword">AND</span> <span class="function">FORMAT_DATE</span>(<span class="string">'%Y%m%d'</span>, <span class="function">CURRENT_DATE</span>())
+<span class="keyword">GROUP BY</span> event_date
+<span class="keyword">ORDER BY</span> event_date
+        </div>
+
+        <h3 style="color: #4285f4; margin-top: 30px;">集計クエリ例</h3>
+        <div class="code-box">
+<span class="comment">-- 月次のユーザー行動分析</span>
+<span class="keyword">SELECT</span>
+    <span class="function">SUBSTR</span>(_TABLE_SUFFIX, <span class="number">1</span>, <span class="number">6</span>) <span class="keyword">AS</span> year_month,  <span class="comment">-- 202411</span>
+    event_type,
+    <span class="function">COUNT</span>(*) <span class="keyword">AS</span> event_count,
+    <span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> user_id) <span class="keyword">AS</span> unique_users,
+    <span class="function">AVG</span>(session_duration) <span class="keyword">AS</span> avg_session_duration
+<span class="keyword">FROM</span> <span class="string">`project.dataset.events_*`</span>
+<span class="keyword">WHERE</span>
+    <span class="comment">-- 2024年のデータのみ</span>
+    _TABLE_SUFFIX <span class="keyword">LIKE</span> <span class="string">'2024%'</span>
+<span class="keyword">GROUP BY</span> year_month, event_type
+<span class="keyword">ORDER BY</span> year_month, event_count <span class="keyword">DESC</span>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ ワイルドカードクエリの注意点:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li><strong>スキャン量:</strong> _TABLE_SUFFIXフィルタがないと全テーブルをスキャン → 高コスト</li>
+                <li><strong>文字列比較:</strong> _TABLE_SUFFIXは文字列なので日付関数が使えない</li>
+                <li><strong>パフォーマンス:</strong> パーティションテーブルのプルーニングより遅い</li>
+                <li><strong>メタデータ:</strong> 大量のテーブルがあるとメタデータ取得に時間がかかる</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🔄 パーティショニングへの移行</h2>
+
+        <div class="migration-flow">
+            <h3 style="text-align: center; color: #4285f4; margin-top: 0;">移行手順</h3>
+            
+            <div class="migration-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">パーティションテーブルの作成</div>
+                    <div class="step-desc">
+                        日付パーティションを持つ新しいテーブルを作成。<br>
+                        パーティション列とスキーマを定義。
+                    </div>
+                    <div class="code-box" style="margin-top: 10px;">
+<span class="keyword">CREATE TABLE</span> <span class="string">`project.dataset.events_partitioned`</span>
+<span class="keyword">PARTITION BY</span> <span class="function">DATE</span>(event_timestamp)
+<span class="keyword">CLUSTER BY</span> user_id, event_type
+<span class="keyword">AS</span>
+<span class="keyword">SELECT</span>
+    event_id,
+    user_id,
+    event_type,
+    event_timestamp,
+    properties
+<span class="keyword">FROM</span> <span class="string">`project.dataset.events_*`</span>
+<span class="keyword">WHERE</span> _TABLE_SUFFIX <span class="keyword">BETWEEN</span> <span class="string">'20240101'</span> <span class="keyword">AND</span> <span class="string">'20241231'</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="migration-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">データの検証</div>
+                    <div class="step-desc">
+                        移行したデータの整合性を確認。<br>
+                        行数、ユニーク値、集計結果を比較。
+                    </div>
+                    <div class="code-box" style="margin-top: 10px;">
+<span class="comment">-- シャーディングテーブルの行数</span>
+<span class="keyword">SELECT</span> <span class="function">COUNT</span>(*) <span class="keyword">FROM</span> <span class="string">`project.dataset.events_*`</span>
+<span class="keyword">WHERE</span> _TABLE_SUFFIX <span class="keyword">BETWEEN</span> <span class="string">'20240101'</span> <span class="keyword">AND</span> <span class="string">'20241231'</span>
+
+<span class="comment">-- パーティションテーブルの行数</span>
+<span class="keyword">SELECT</span> <span class="function">COUNT</span>(*) <span class="keyword">FROM</span> <span class="string">`project.dataset.events_partitioned`</span>
+<span class="keyword">WHERE</span> event_timestamp <span class="keyword">BETWEEN</span> <span class="string">'2024-01-01'</span> <span class="keyword">AND</span> <span class="string">'2024-12-31'</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="migration-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">クエリの書き換え</div>
+                    <div class="step-desc">
+                        既存のクエリをパーティションテーブル用に書き換え。<br>
+                        UNION ALLやワイルドカードを削除。
+                    </div>
+                    <div class="query-comparison" style="margin-top: 15px;">
+                        <div>
+                            <div style="font-weight: bold; margin-bottom: 8px; color: #f44336;">❌ 移行前（シャーディング）</div>
+                            <div class="query-box query-bad">
+<span class="keyword">SELECT</span> *
+<span class="keyword">FROM</span> <span class="string">`events_*`</span>
+<span class="keyword">WHERE</span> _TABLE_SUFFIX 
+  <span class="keyword">BETWEEN</span> <span class="string">'20241120'</span> 
+  <span class="keyword">AND</span> <span class="string">'20241125'</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-weight: bold; margin-bottom: 8px; color: #4caf50;">✅ 移行後（パーティション）</div>
+                            <div class="query-box query-good">
+<span class="keyword">SELECT</span> *
+<span class="keyword">FROM</span> <span class="string">`events_partitioned`</span>
+<span class="keyword">WHERE</span> event_timestamp
+  <span class="keyword">BETWEEN</span> <span class="string">'2024-11-20'</span>
+  <span class="keyword">AND</span> <span class="string">'2024-11-25'</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="migration-step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-title">アプリケーションの切り替え</div>
+                    <div class="step-desc">
+                        アプリケーション、ETL、ダッシュボードを新テーブルに切り替え。<br>
+                        段階的にロールアウトして影響を最小化。
+                    </div>
+                </div>
+            </div>
+
+            <div class="migration-step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <div class="step-title">古いテーブルの削除</div>
+                    <div class="step-desc">
+                        移行完了後、一定期間（例: 30日）経過したらシャーディングテーブルを削除。<br>
+                        バックアップを取ってから削除を推奨。
+                    </div>
+                    <div class="code-box" style="margin-top: 10px;">
+<span class="comment">-- 古いシャーディングテーブルを削除</span>
+<span class="keyword">DROP TABLE</span> <span class="string">`project.dataset.events_20241101`</span>;
+<span class="keyword">DROP TABLE</span> <span class="string">`project.dataset.events_20241102`</span>;
+<span class="comment">-- ...</span>
+
+<span class="comment">-- またはスクリプトで一括削除</span>
+bq ls --max_results=1000 project:dataset | grep <span class="string">'events_'</span> | \
+  xargs -I {} bq rm -f -t project:dataset.{}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">💻 移行スクリプト例</h2>
+
+        <h3 style="color: #4285f4;">Python スクリプト（全テーブルを統合）</h3>
+        <div class="code-box">
+<span class="keyword">from</span> google.cloud <span class="keyword">import</span> bigquery
+<span class="keyword">import</span> datetime
+
+<span class="keyword">def</span> migrate_sharded_to_partitioned(
+    project_id,
+    dataset_id,
+    source_prefix,      <span class="comment"># 'events_'</span>
+    target_table_name,  <span class="comment"># 'events_partitioned'</span>
+    partition_column    <span class="comment"># 'event_timestamp'</span>
+):
+    client = bigquery.Client(project=project_id)
+    
+    <span class="comment"># パーティションテーブルの作成</span>
+    target_table_id = <span class="string">f"{project_id}.{dataset_id}.{target_table_name}"</span>
+    
+    <span class="comment"># シャーディングテーブルから全データをコピー</span>
+    query = <span class="string">f"""
+    CREATE OR REPLACE TABLE `{target_table_id}`
+    PARTITION BY DATE({partition_column})
+    CLUSTER BY user_id, event_type
+    AS
+    SELECT *
+    FROM `{project_id}.{dataset_id}.{source_prefix}*`
+    WHERE _TABLE_SUFFIX >= FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 365 DAY))
+    """</span>
+    
+    print(<span class="string">f"Creating partitioned table: {target_table_id}"</span>)
+    query_job = client.query(query)
+    query_job.result()  <span class="comment"># 完了を待機</span>
+    
+    print(<span class="string">f"Migration completed: {query_job.total_bytes_processed / (1024**3):.2f} GB processed"</span>)
+    
+    <span class="comment"># 行数を検証</span>
+    source_count_query = <span class="string">f"""
+    SELECT COUNT(*) as count
+    FROM `{project_id}.{dataset_id}.{source_prefix}*`
+    WHERE _TABLE_SUFFIX >= FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 365 DAY))
+    """</span>
+    
+    target_count_query = <span class="string">f"SELECT COUNT(*) as count FROM `{target_table_id}`"</span>
+    
+    source_count = list(client.query(source_count_query).result())[<span class="number">0</span>].count
+    target_count = list(client.query(target_count_query).result())[<span class="number">0</span>].count
+    
+    print(<span class="string">f"Source tables: {source_count:,} rows"</span>)
+    print(<span class="string">f"Target table: {target_count:,} rows"</span>)
+    
+    <span class="keyword">if</span> source_count == target_count:
+        print(<span class="string">"✅ Row counts match - migration successful!"</span>)
+    <span class="keyword">else</span>:
+        print(<span class="string">"⚠️ Row count mismatch - please investigate"</span>)
+
+<span class="comment"># 実行</span>
+migrate_sharded_to_partitioned(
+    project_id=<span class="string">"my-project"</span>,
+    dataset_id=<span class="string">"my_dataset"</span>,
+    source_prefix=<span class="string">"events_"</span>,
+    target_table_name=<span class="string">"events_partitioned"</span>,
+    partition_column=<span class="string">"event_timestamp"</span>
+)
+        </div>
+
+        <h3 style="color: #4285f4; margin-top: 30px;">bqコマンドでの移行</h3>
+        <div class="code-box">
+<span class="comment"># パーティションテーブルを作成</span>
+bq mk \
+  --table \
+  --time_partitioning_field=event_timestamp \
+  --clustering_fields=user_id,event_type \
+  project:dataset.events_partitioned \
+  schema.json
+
+<span class="comment"># シャーディングテーブルからデータをコピー</span>
+bq query --use_legacy_sql=false \
+<span class="string">'
+INSERT INTO `project.dataset.events_partitioned`
+SELECT *
+FROM `project.dataset.events_*`
+WHERE _TABLE_SUFFIX BETWEEN "20240101" AND "20241231"
+'</span>
+
+<span class="comment"># 行数を確認</span>
+bq query --use_legacy_sql=false \
+<span class="string">'SELECT COUNT(*) FROM `project.dataset.events_partitioned`'</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">✅ ベストプラクティス</h2>
+
+        <div class="benefit-list">
+            <h4>🎯 移行時の推奨事項</h4>
+            <table style="margin-top: 10px;">
+                <thead>
+                    <tr>
+                        <th>項目</th>
+                        <th>推奨事項</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>移行タイミング</strong></td>
+                        <td>できるだけ早く実施。新規プロジェクトでは絶対にシャーディングを使わない</td>
+                    </tr>
+                    <tr>
+                        <td><strong>データ検証</strong></td>
+                        <td>移行前後で行数、ユニーク値、集計結果を必ず比較</td>
+                    </tr>
+                    <tr>
+                        <td><strong>段階的移行</strong></td>
+                        <td>最初は過去1年分のみ移行し、問題なければ全データを移行</td>
+                    </tr>
+                    <tr>
+                        <td><strong>並行運用期間</strong></td>
+                        <td>30日程度は両方のテーブルを維持し、問題ないことを確認</td>
+                    </tr>
+                    <tr>
+                        <td><strong>バックアップ</strong></td>
+                        <td>削除前にCloud Storageへエクスポートまたはスナップショット取得</td>
+                    </tr>
+                    <tr>
+                        <td><strong>クエリ最適化</strong></td>
+                        <td>パーティション列でのフィルタを必須にし、プルーニングを活用</td>
+                    </tr>
+                    <tr>
+                        <td><strong>モニタリング</strong></td>
+                        <td>移行後のコスト、パフォーマンス、エラー率を監視</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ 移行時の注意点:</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li><strong>スロット不足:</strong> 大量データの移行は時間とスロットを消費</li>
+                <li><strong>コスト:</strong> 全テーブルのフルスキャンが発生するため、初回移行のコストに注意</li>
+                <li><strong>タイムスタンプ列:</strong> パーティション列に適切なタイムスタンプ列があることを確認</li>
+                <li><strong>NULL値:</strong> パーティション列にNULLがあると__NULL__パーティションに格納される</li>
+                <li><strong>依存関係:</strong> ビュー、Scheduled Query、Data Studioなど依存関係を全て更新</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">📊 パーティショニングの利点（詳細）</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>シャーディング</th>
+                    <th>パーティショニング</th>
+                    <th>改善</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>テーブル管理</strong></td>
+                    <td>365個/年</td>
+                    <td>1個</td>
+                    <td>99.7%削減</td>
+                </tr>
+                <tr>
+                    <td><strong>クエリの複雑さ</strong></td>
+                    <td>UNION ALL必須</td>
+                    <td>通常のSELECT</td>
+                    <td>シンプル</td>
+                </tr>
+                <tr>
+                    <td><strong>スキャン効率</strong></td>
+                    <td>テーブルメタデータ読込</td>
+                    <td>パーティションプルーニング</td>
+                    <td>10-100倍高速</td>
+                </tr>
+                <tr>
+                    <td><strong>スキーマ変更</strong></td>
+                    <td>全テーブルにALTER</td>
+                    <td>1回のALTER</td>
+                    <td>99%削減</td>
+                </tr>
+                <tr>
+                    <td><strong>データ保持期間</strong></td>
+                    <td>手動削除</td>
+                    <td>自動削除可能</td>
+                    <td>自動化</td>
+                </tr>
+                <tr>
+                    <td><strong>コスト最適化</strong></td>
+                    <td>難しい</td>
+                    <td>クラスタリング併用</td>
+                    <td>さらに削減</td>
+                </tr>
+                <tr>
+                    <td><strong>APIコール数</strong></td>
+                    <td>テーブル数に比例</td>
+                    <td>1回</td>
+                    <td>99%削減</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2>📚 まとめ</h2>
+        <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50;">
+            <h3 style="color: #2e7d32; margin-top: 0;">🎓 BigQueryシャーディングの重要ポイント</h3>
+            
+            <ul style="line-height: 1.8;">
+                <li><strong>シャーディングとは:</strong> 日付ごとに別テーブルを作成する古い手法</li>
+                <li><strong>問題点:</strong> テーブル数爆発、クエリの複雑化、管理コスト増大</li>
+                <li><strong>非推奨:</strong> Googleはパーティションテーブルへの移行を強く推奨</li>
+                <li><strong>ワイルドカード:</strong> 複数テーブルを一度に検索可能だが、パフォーマンスは劣る</li>
+                <li><strong>移行手順:</strong> パーティションテーブル作成 → データコピー → 検証 → 切替 → 削除</li>
+                <li><strong>利点:</strong> テーブル管理99.7%削減、クエリシンプル化、パフォーマンス向上</li>
+            </ul>
+
+            <div style="background: #ffebee; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                <strong style="color: #c62828;">🚨 絶対に覚えておくこと:</strong>
+                <ul style="margin: 10px 0; font-size: 14px;">
+                    <li><strong>新規プロジェクト:</strong> シャーディングは絶対に使わない</li>
+                    <li><strong>既存システム:</strong> できるだけ早くパーティショニングに移行</li>
+                    <li><strong>レガシー手法:</strong> シャーディングは技術的負債</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 18px; font-weight: bold; color: #2e7d32;">
+                パーティションテーブルを使って、<br>
+                シンプルで効率的なデータ管理を実現しましょう！
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
