@@ -61,6 +61,10 @@ index:
     items:
       - name: base
         source: null
+  - dir: cloud-sql
+    items:
+      - name: sql-auth-proxy
+        source: null
   - dir: dataflow
     items:
       - name: sliding-window
