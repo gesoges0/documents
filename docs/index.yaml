@@ -47,6 +47,8 @@ index:
         source: null
       - name: dlp
         source: null
+      - name: sharding
+        source: null
   - dir: bigtable
     items:
       - name: raw-key
