@@ -29,6 +29,8 @@ index:
         source: https://docs.getdbt.com/best-practices/how-we-structure/5-the-rest-of-the-project
       - name: layer-strategy-for-cache
         source: null
+      - name: incremental-model
+        source: null
   - dir: db
     items:
       - name: normalization
