@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タンブリングウィンドウ 解説</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #1976d2;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: #1976d2;
+            border-bottom: 3px solid #1976d2;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .key-point {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #1976d2;
+        }
+        .window-viz {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #e0e0e0;
+        }
+        .timeline {
+            position: relative;
+            margin: 30px 0;
+            padding: 20px 0;
+        }
+        .time-axis {
+            position: relative;
+            height: 2px;
+            background: #333;
+            margin: 20px 0;
+        }
+        .time-label {
+            position: absolute;
+            top: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            transform: translateX(-50%);
+        }
+        .window-box {
+            position: absolute;
+            height: 80px;
+            border: 3px solid #1976d2;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1565c0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .window-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(25,118,210,0.3);
+        }
+        .event-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f44336;
+            border: 2px solid white;
+            top: -5px;
+            transform: translateX(-50%);
+            cursor: pointer;
+        }
+        .event-dot:hover {
+            transform: translateX(-50%) scale(1.3);
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .window-type-card {
+            background: #f8f9fa;
+            border: 3px solid;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .card-tumbling {
+            border-color: #1976d2;
+        }
+        .card-hopping {
+            border-color: #ff9800;
+        }
+        .card-sliding {
+            border-color: #4caf50;
+        }
+        .card-session {
+            border-color: #9c27b0;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .title-tumbling {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .title-hopping {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .title-sliding {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .title-session {
+            background: #f3e5f5;
+            color: #6a1b9a;
+        }
+        .code-box {
+            background: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            margin: 15px 0;
+            overflow-x: auto;
+            color: #d4d4d4;
+        }
+        .keyword {
+            color: #569cd6;
+            font-weight: bold;
+        }
+        .string {
+            color: #ce9178;
+        }
+        .comment {
+            color: #6a9955;
+            font-style: italic;
+        }
+        .function {
+            color: #dcdcaa;
+            font-weight: bold;
+        }
+        .number {
+            color: #b5cea8;
+        }
+        .highlight {
+            background: #fff9c4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #000;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #e3f2fd;
+            color: #1565c0;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .use-case {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .use-case h4 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .warning-box strong {
+            color: #e65100;
+        }
+        .benefit-list {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .benefit-list h4 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .example-viz {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .data-table {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .window-result {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .window-result h4 {
+            color: #1565c0;
+            margin-top: 0;
+            font-size: 15px;
+        }
+        .characteristics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .char-card {
+            background: #f8f9fa;
+            border: 2px solid #1976d2;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .char-card h4 {
+            color: #1976d2;
+            margin-top: 0;
+            font-size: 14px;
+        }
+        .char-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>⏱️ タンブリングウィンドウ (Tumbling Window)</h1>
+    <p class="subtitle">固定サイズで重複しないウィンドウによるストリーム処理</p>
+
+    <div class="container">
+        <h2 class="section-title">📖 タンブリングウィンドウとは</h2>
+        
+        <div class="key-point">
+            <h3 style="color: #1976d2; margin-top: 0;">🎯 概要</h3>
+            <p style="font-size: 16px; line-height: 1.8;">
+                タンブリングウィンドウ（Tumbling Window）は、<span class="highlight">固定サイズで重複しないウィンドウ</span>を使ってストリームデータを区切る方法です。
+                各ウィンドウは連続しており、データポイントは<strong>必ず1つのウィンドウにのみ</strong>属します。
+            </p>
+            <ul style="font-size: 15px; line-height: 1.8;">
+                <li><strong>固定サイズ:</strong> すべてのウィンドウが同じ長さ（例: 5分、1時間、1日）</li>
+                <li><strong>重複なし:</strong> ウィンドウ間でデータが重複しない</li>
+                <li><strong>連続:</strong> 前のウィンドウが終わると次のウィンドウが始まる</li>
+                <li><strong>時間ベース:</strong> イベント時間またはプロセッシング時間で区切る</li>
+            </ul>
+        </div>
+
+        <div class="window-viz">
+            <h3 style="text-align: center; color: #1976d2; margin-top: 0;">タンブリングウィンドウの視覚化</h3>
+            
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <strong style="color: #1565c0;">例: 5分間のタンブリングウィンドウ</strong>
+            </div>
+
+            <div class="timeline">
+                <div class="time-axis">
+                    <div class="time-label" style="left: 0%;">10:00</div>
+                    <div class="time-label" style="left: 20%;">10:05</div>
+                    <div class="time-label" style="left: 40%;">10:10</div>
+                    <div class="time-label" style="left: 60%;">10:15</div>
+                    <div class="time-label" style="left: 80%;">10:20</div>
+                    <div class="time-label" style="left: 100%;">10:25</div>
+                </div>
+
+                <div style="position: relative; margin-top: 40px;">
+                    <!-- Window 1 -->
+                    <div class="window-box" style="left: 0%; width: 20%; top: 0;">
+                        Window 1<br>
+                        [10:00-10:05)
+                    </div>
+                    
+                    <!-- Window 2 -->
+                    <div class="window-box" style="left: 20%; width: 20%; top: 0;">
+                        Window 2<br>
+                        [10:05-10:10)
+                    </div>
+                    
+                    <!-- Window 3 -->
+                    <div class="window-box" style="left: 40%; width: 20%; top: 0;">
+                        Window 3<br>
+                        [10:10-10:15)
+                    </div>
+                    
+                    <!-- Window 4 -->
+                    <div class="window-box" style="left: 60%; width: 20%; top: 0;">
+                        Window 4<br>
+                        [10:15-10:20)
+                    </div>
+                    
+                    <!-- Window 5 -->
+                    <div class="window-box" style="left: 80%; width: 20%; top: 0;">
+                        Window 5<br>
+                        [10:20-10:25)
+                    </div>
+                </div>
+
+                <!-- イベントドット -->
+                <div style="position: relative; margin-top: 100px;">
+                    <div class="event-dot" style="left: 5%;" title="Event @ 10:01"></div>
+                    <div class="event-dot" style="left: 12%;" title="Event @ 10:03"></div>
+                    <div class="event-dot" style="left: 25%;" title="Event @ 10:06"></div>
+                    <div class="event-dot" style="left: 35%;" title="Event @ 10:08"></div>
+                    <div class="event-dot" style="left: 42%;" title="Event @ 10:10"></div>
+                    <div class="event-dot" style="left: 55%;" title="Event @ 10:13"></div>
+                    <div class="event-dot" style="left: 68%;" title="Event @ 10:17"></div>
+                    <div class="event-dot" style="left: 85%;" title="Event @ 10:21"></div>
+                    <div class="event-dot" style="left: 92%;" title="Event @ 10:23"></div>
+                </div>
+            </div>
+
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <strong style="color: #2e7d32;">✅ 特徴:</strong>
+                <ul style="font-size: 13px; margin: 10px 0;">
+                    <li>各ウィンドウは正確に5分間</li>
+                    <li>ウィンドウ間に隙間やオーバーラップなし</li>
+                    <li>イベントは1つのウィンドウにのみ属する</li>
+                    <li>10:05のイベントはWindow 2に属する（左閉右開区間: [10:05, 10:10)）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🔍 タンブリングウィンドウの特性</h2>
+
+        <div class="characteristics">
+            <div class="char-card">
+                <div class="char-icon">📏</div>
+                <h4>固定サイズ</h4>
+                <div style="font-size: 14px; line-height: 1.8;">
+                    すべてのウィンドウが同じ長さ。<br>
+                    例: 1分、5分、1時間、1日など。<br>
+                    ウィンドウサイズは変わらない。
+                </div>
+            </div>
+
+            <div class="char-card">
+                <div class="char-icon">🚫</div>
+                <h4>重複なし</h4>
+                <div style="font-size: 14px; line-height: 1.8;">
+                    各データポイントは1つのウィンドウにのみ属する。<br>
+                    ウィンドウ間でデータの重複なし。<br>
+                    効率的なメモリ使用。
+                </div>
+            </div>
+
+            <div class="char-card">
+                <div class="char-icon">⏱️</div>
+                <h4>時間ベース</h4>
+                <div style="font-size: 14px; line-height: 1.8;">
+                    イベント時間またはプロセッシング時間で区切る。<br>
+                    タイムスタンプに基づいてウィンドウ割り当て。<br>
+                    遅延データの扱いに注意。
+                </div>
+            </div>
+
+            <div class="char-card">
+                <div class="char-icon">🔗</div>
+                <h4>連続性</h4>
+                <div style="font-size: 14px; line-height: 1.8;">
+                    前のウィンドウ終了 = 次のウィンドウ開始。<br>
+                    隙間なく連続。<br>
+                    データの欠損なし。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🆚 他のウィンドウタイプとの比較</h2>
+
+        <div class="comparison-grid">
+            <div class="window-type-card card-tumbling">
+                <div class="card-title title-tumbling">タンブリング</div>
+                
+                <div style="text-align: left; margin: 15px 0;">
+                    <div style="font-size: 14px; line-height: 1.8;">
+                        <strong>特徴:</strong><br>
+                        • 固定サイズ<br>
+                        • 重複なし<br>
+                        • 連続<br>
+                        <br>
+                        <strong>メモリ:</strong> 低<br>
+                        <strong>計算量:</strong> 低<br>
+                        <strong>遅延:</strong> 中
+                    </div>
+                </div>
+
+                <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; font-size: 12px;">
+                    <strong>図解:</strong><br>
+                    <code>[---][---][---][---]</code>
+                </div>
+            </div>
+
+            <div class="window-type-card card-hopping">
+                <div class="card-title title-hopping">ホッピング</div>
+                
+                <div style="text-align: left; margin: 15px 0;">
+                    <div style="font-size: 14px; line-height: 1.8;">
+                        <strong>特徴:</strong><br>
+                        • 固定サイズ<br>
+                        • 重複あり<br>
+                        • ホップ間隔で移動<br>
+                        <br>
+                        <strong>メモリ:</strong> 中<br>
+                        <strong>計算量:</strong> 中<br>
+                        <strong>遅延:</strong> 中
+                    </div>
+                </div>
+
+                <div style="background: #fff3e0; padding: 10px; border-radius: 5px; font-size: 12px;">
+                    <strong>図解:</strong><br>
+                    <code>[-----]</code><br>
+                    <code>&nbsp;&nbsp;[-----]</code><br>
+                    <code>&nbsp;&nbsp;&nbsp;&nbsp;[-----]</code>
+                </div>
+            </div>
+
+            <div class="window-type-card card-sliding">
+                <div class="card-title title-sliding">スライディング</div>
+                
+                <div style="text-align: left; margin: 15px 0;">
+                    <div style="font-size: 14px; line-height: 1.8;">
+                        <strong>特徴:</strong><br>
+                        • 固定サイズ<br>
+                        • 連続的にスライド<br>
+                        • イベント毎に更新<br>
+                        <br>
+                        <strong>メモリ:</strong> 高<br>
+                        <strong>計算量:</strong> 高<br>
+                        <strong>遅延:</strong> 低
+                    </div>
+                </div>
+
+                <div style="background: #e8f5e9; padding: 10px; border-radius: 5px; font-size: 12px;">
+                    <strong>図解:</strong><br>
+                    <code>[-----]</code><br>
+                    <code>&nbsp;[-----]</code><br>
+                    <code>&nbsp;&nbsp;[-----]</code>
+                </div>
+            </div>
+        </div>
+
+        <div class="window-type-card card-session" style="margin-top: 20px;">
+            <div class="card-title title-session">セッション</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left;">
+                <div style="font-size: 14px; line-height: 1.8;">
+                    <strong>特徴:</strong><br>
+                    • 可変サイズ<br>
+                    • アクティビティギャップで区切る<br>
+                    • タイムアウトベース<br>
+                    <br>
+                    <strong>メモリ:</strong> 中〜高<br>
+                    <strong>計算量:</strong> 中<br>
+                    <strong>遅延:</strong> 可変
+                </div>
+
+                <div style="background: #f3e5f5; padding: 10px; border-radius: 5px; font-size: 12px;">
+                    <strong>図解:</strong><br>
+                    <code>[--]&nbsp;&nbsp;&nbsp;[----]&nbsp;&nbsp;[-]</code><br>
+                    <span style="font-size: 10px;">↑ギャップ↑ギャップ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">💻 実装例</h2>
+
+        <h3 style="color: #1976d2;">1. Apache Beam (Python)</h3>
+        <div class="code-box">
+<span class="keyword">import</span> apache_beam <span class="keyword">as</span> beam
+<span class="keyword">from</span> apache_beam <span class="keyword">import</span> window
+
+<span class="keyword">def</span> <span class="function">process_with_tumbling_window</span>():
+    <span class="keyword">with</span> beam.Pipeline() <span class="keyword">as</span> pipeline:
+        (
+            pipeline
+            | <span class="string">'ReadFromPubSub'</span> >> beam.io.ReadFromPubSub(
+                subscription=<span class="string">'projects/my-project/subscriptions/my-sub'</span>
+            )
+            | <span class="string">'ParseJSON'</span> >> beam.Map(<span class="keyword">lambda</span> x: json.loads(x))
+            | <span class="string">'ExtractTimestamp'</span> >> beam.Map(
+                <span class="keyword">lambda</span> x: beam.window.TimestampedValue(
+                    x, x[<span class="string">'timestamp'</span>]
+                )
+            )
+            <span class="comment"># 5分間のタンブリングウィンドウ</span>
+            | <span class="string">'WindowInto'</span> >> beam.WindowInto(
+                window.<span class="function">FixedWindows</span>(<span class="number">5</span> * <span class="number">60</span>)  <span class="comment"># 5分 = 300秒</span>
+            )
+            | <span class="string">'CountPerWindow'</span> >> beam.combiners.Count.PerElement()
+            | <span class="string">'WriteToBigQuery'</span> >> beam.io.WriteToBigQuery(
+                table=<span class="string">'project:dataset.windowed_counts'</span>
+            )
+        )
+        </div>
+
+        <h3 style="color: #1976d2; margin-top: 30px;">2. Apache Flink (Java)</h3>
+        <div class="code-box">
+<span class="keyword">import</span> org.apache.flink.streaming.api.windowing.time.Time;
+<span class="keyword">import</span> org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+
+DataStream<Event> stream = ...;
+
+<span class="comment">// 10分間のタンブリングウィンドウ</span>
+stream
+    .keyBy(event -> event.getUserId())
+    .window(<span class="function">TumblingEventTimeWindows</span>.of(Time.<span class="function">minutes</span>(<span class="number">10</span>)))
+    .sum(<span class="string">"value"</span>)
+    .print();
+
+<span class="comment">// または処理時間ベース</span>
+stream
+    .keyBy(event -> event.getUserId())
+    .window(<span class="function">TumblingProcessingTimeWindows</span>.of(Time.<span class="function">minutes</span>(<span class="number">10</span>)))
+    .aggregate(<span class="keyword">new</span> MyAggregateFunction())
+    .addSink(<span class="keyword">new</span> MySink());
+        </div>
+
+        <h3 style="color: #1976d2; margin-top: 30px;">3. Apache Spark Structured Streaming</h3>
+        <div class="code-box">
+<span class="keyword">from</span> pyspark.sql <span class="keyword">import</span> SparkSession
+<span class="keyword">from</span> pyspark.sql.functions <span class="keyword">import</span> window, col
+
+spark = SparkSession.builder.appName(<span class="string">"TumblingWindowExample"</span>).getOrCreate()
+
+<span class="comment"># ストリーム読み込み</span>
+df = spark \
+    .readStream \
+    .format(<span class="string">"kafka"</span>) \
+    .option(<span class="string">"kafka.bootstrap.servers"</span>, <span class="string">"localhost:9092"</span>) \
+    .option(<span class="string">"subscribe"</span>, <span class="string">"events"</span>) \
+    .load()
+
+<span class="comment"># 10分間のタンブリングウィンドウで集計</span>
+windowed_counts = df \
+    .groupBy(
+        <span class="function">window</span>(col(<span class="string">"timestamp"</span>), <span class="string">"10 minutes"</span>),
+        col(<span class="string">"user_id"</span>)
+    ) \
+    .count()
+
+<span class="comment"># 結果を出力</span>
+query = windowed_counts \
+    .writeStream \
+    .outputMode(<span class="string">"complete"</span>) \
+    .format(<span class="string">"console"</span>) \
+    .start()
+
+query.awaitTermination()
+        </div>
+
+        <h3 style="color: #1976d2; margin-top: 30px;">4. Google Cloud Dataflow (SQL)</h3>
+        <div class="code-box">
+<span class="comment">-- 1時間のタンブリングウィンドウで集計</span>
+<span class="keyword">SELECT</span>
+    <span class="function">TUMBLE_START</span>(event_timestamp, <span class="keyword">INTERVAL</span> <span class="number">1</span> <span class="keyword">HOUR</span>) <span class="keyword">AS</span> window_start,
+    <span class="function">TUMBLE_END</span>(event_timestamp, <span class="keyword">INTERVAL</span> <span class="number">1</span> <span class="keyword">HOUR</span>) <span class="keyword">AS</span> window_end,
+    user_id,
+    <span class="function">COUNT</span>(*) <span class="keyword">AS</span> event_count,
+    <span class="function">SUM</span>(amount) <span class="keyword">AS</span> total_amount
+<span class="keyword">FROM</span>
+    pubsub.project.topic.events
+<span class="keyword">GROUP BY</span>
+    <span class="function">TUMBLE</span>(event_timestamp, <span class="keyword">INTERVAL</span> <span class="number">1</span> <span class="keyword">HOUR</span>),
+    user_id
+        </div>
+
+        <h3 style="color: #1976d2; margin-top: 30px;">5. Kafka Streams (Java)</h3>
+        <div class="code-box">
+<span class="keyword">import</span> org.apache.kafka.streams.kstream.TimeWindows;
+<span class="keyword">import</span> java.time.Duration;
+
+KStream<String, Event> stream = builder.stream(<span class="string">"events"</span>);
+
+<span class="comment">// 5分間のタンブリングウィンドウ</span>
+stream
+    .groupByKey()
+    .windowedBy(<span class="function">TimeWindows</span>.ofSizeWithNoGrace(Duration.<span class="function">ofMinutes</span>(<span class="number">5</span>)))
+    .count()
+    .toStream()
+    .to(<span class="string">"windowed-counts"</span>);
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">📊 具体例: Webサイトのアクセスログ分析</h2>
+
+        <div class="example-viz">
+            <h3 style="text-align: center; color: #1976d2; margin-top: 0;">5分間のタンブリングウィンドウでページビュー数を集計</h3>
+
+            <div style="background: #fff3e0; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <strong>シナリオ:</strong> リアルタイムでページビュー数を5分ごとに集計してダッシュボードに表示
+            </div>
+
+            <div class="data-table">
+<strong>入力データ（イベントストリーム）:</strong>
+
+10:01:30 - user_123 - /home - PageView
+10:02:15 - user_456 - /products - PageView
+10:03:45 - user_789 - /home - PageView
+10:04:20 - user_123 - /cart - PageView
+10:05:10 - user_456 - /checkout - PageView
+10:06:30 - user_789 - /products - PageView
+10:07:45 - user_123 - /home - PageView
+10:09:20 - user_456 - /about - PageView
+10:10:05 - user_789 - /contact - PageView
+            </div>
+
+            <div class="window-result">
+                <h4>ウィンドウ 1: [10:00:00 - 10:05:00)</h4>
+                <div style="font-size: 14px; margin-top: 10px;">
+                    <strong>含まれるイベント:</strong><br>
+                    • 10:01:30 - /home<br>
+                    • 10:02:15 - /products<br>
+                    • 10:03:45 - /home<br>
+                    • 10:04:20 - /cart<br>
+                    <br>
+                    <strong>集計結果:</strong><br>
+                    • 総ページビュー: 4<br>
+                    • ユニークユーザー: 3<br>
+                    • 人気ページ: /home (2回)
+                </div>
+            </div>
+
+            <div class="window-result">
+                <h4>ウィンドウ 2: [10:05:00 - 10:10:00)</h4>
+                <div style="font-size: 14px; margin-top: 10px;">
+                    <strong>含まれるイベント:</strong><br>
+                    • 10:05:10 - /checkout<br>
+                    • 10:06:30 - /products<br>
+                    • 10:07:45 - /home<br>
+                    • 10:09:20 - /about<br>
+                    <br>
+                    <strong>集計結果:</strong><br>
+                    • 総ページビュー: 4<br>
+                    • ユニークユーザー: 3<br>
+                    • 人気ページ: すべて1回ずつ
+                </div>
+            </div>
+
+            <div class="window-result">
+                <h4>ウィンドウ 3: [10:10:00 - 10:15:00)</h4>
+                <div style="font-size: 14px; margin-top: 10px;">
+                    <strong>含まれるイベント:</strong><br>
+                    • 10:10:05 - /contact<br>
+                    <br>
+                    <strong>集計結果:</strong><br>
+                    • 総ページビュー: 1<br>
+                    • ユニークユーザー: 1<br>
+                    • 人気ページ: /contact (1回)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">🎯 ユースケース</h2>
+
+        <div class="use-case">
+            <h4>1️⃣ リアルタイムダッシュボード</h4>
+            <p><strong>シナリオ:</strong> 5分ごとのWebサイトトラフィックをリアルタイム表示</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>5分間のタンブリングウィンドウでページビュー集計</li>
+                    <li>ウィンドウ終了時にダッシュボードを更新</li>
+                    <li>過去24時間分のウィンドウを表示</li>
+                </ul>
+                <strong>メリット:</strong> シンプル、予測可能、オーバーヘッド低
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>2️⃣ 時間別売上レポート</h4>
+            <p><strong>シナリオ:</strong> ECサイトの1時間ごとの売上集計</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>1時間のタンブリングウィンドウで注文を集計</li>
+                    <li>売上金額、注文数、平均単価を計算</li>
+                    <li>BigQueryに保存してLookerで可視化</li>
+                </ul>
+                <strong>メリット:</strong> 正確、重複なし、時系列分析が容易
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>3️⃣ IoTセンサーデータ集計</h4>
+            <p><strong>シナリオ:</strong> 温度センサーの10分ごとの平均値を記録</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>10分間のタンブリングウィンドウで温度データを集計</li>
+                    <li>平均、最小、最大を計算</li>
+                    <li>異常値検知のベースライン作成</li>
+                </ul>
+                <strong>メリット:</strong> データ量削減、トレンド分析、ストレージ効率化
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>4️⃣ アプリケーションメトリクス</h4>
+            <p><strong>シナリオ:</strong> アプリケーションの1分ごとのエラー率監視</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>1分間のタンブリングウィンドウでログを集計</li>
+                    <li>エラー数 / 総リクエスト数でエラー率計算</li>
+                    <li>閾値超過時にアラート送信</li>
+                </ul>
+                <strong>メリット:</strong> リアルタイム監視、誤検知削減、トレンド把握
+            </div>
+        </div>
+
+        <div class="use-case">
+            <h4>5️⃣ ログ集約とバッチ処理</h4>
+            <p><strong>シナリオ:</strong> アプリケーションログを15分ごとにCloud Storageに保存</p>
+            <div style="font-size: 14px; margin-top: 10px;">
+                <strong>実装:</strong>
+                <ul style="margin: 5px 0;">
+                    <li>15分間のタンブリングウィンドウでログを収集</li>
+                    <li>ウィンドウ終了時にParquet形式で保存</li>
+                    <li>日次バッチでBigQueryにロード</li>
+                </ul>
+                <strong>メリット:</strong> ファイル数削減、コスト削減、効率的な保存
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">⚖️ メリットとデメリット</h2>
+
+        <div class="benefit-list">
+            <h4>✅ メリット</h4>
+            <ul style="font-size: 14px; line-height: 1.8;">
+                <li><strong>シンプル:</strong> 実装と理解が容易、デバッグしやすい</li>
+                <li><strong>効率的:</strong> メモリ使用量が少ない、計算コストが低い</li>
+                <li><strong>予測可能:</strong> ウィンドウサイズが固定、出力タイミングが明確</li>
+                <li><strong>重複なし:</strong> データが1つのウィンドウにのみ属する</li>
+                <li><strong>パフォーマンス:</strong> 高スループット、低レイテンシ</li>
+                <li><strong>時系列分析:</strong> 固定間隔でトレンド分析が容易</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ デメリット</strong>
+            <ul style="margin: 10px 0; font-size: 14px;">
+                <li><strong>境界問題:</strong> ウィンドウ境界付近のイベントが分離される</li>
+                <li><strong>遅延感度:</strong> ウィンドウサイズ分の遅延が発生</li>
+                <li><strong>遅延データ:</strong> ウィンドウクローズ後の遅延データは次ウィンドウまたは破棄</li>
+                <li><strong>柔軟性:</strong> 可変長の集計には不向き</li>
+                <li><strong>スムージング:</strong> 急激な変化をスムージングできない</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">💡 ベストプラクティス</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>推奨事項</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>ウィンドウサイズ選択</strong></td>
+                    <td>ユースケースに応じて適切なサイズを選択（1分〜1時間が一般的）</td>
+                </tr>
+                <tr>
+                    <td><strong>遅延データ対応</strong></td>
+                    <td>Allowed LatenessやWatermarkを設定して遅延データを処理</td>
+                </tr>
+                <tr>
+                    <td><strong>Event Time vs Processing Time</strong></td>
+                    <td>正確性重視ならEvent Time、低レイテンシならProcessing Time</td>
+                </tr>
+                <tr>
+                    <td><strong>アラート設計</strong></td>
+                    <td>単一ウィンドウではなく複数ウィンドウのトレンドで判断</td>
+                </tr>
+                <tr>
+                    <td><strong>パーティショニング</strong></td>
+                    <td>ウィンドウ開始時刻でパーティション分割してクエリ最適化</td>
+                </tr>
+                <tr>
+                    <td><strong>モニタリング</strong></td>
+                    <td>ウィンドウごとのデータ量、処理時間、遅延を監視</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2>📚 まとめ</h2>
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 4px solid #1976d2;">
+            <h3 style="color: #1565c0; margin-top: 0;">🎓 タンブリングウィンドウの重要ポイント</h3>
+            
+            <ul style="line-height: 1.8;">
+                <li><strong>定義:</strong> 固定サイズで重複しないウィンドウによるストリーム処理</li>
+                <li><strong>特徴:</strong> 各データは1つのウィンドウにのみ属する</li>
+                <li><strong>メリット:</strong> シンプル、効率的、予測可能</li>
+                <li><strong>デメリット:</strong> 境界問題、遅延感度、柔軟性低</li>
+                <li><strong>適用場面:</strong> ダッシュボード、時系列集計、ログ収集、メトリクス監視</li>
+                <li><strong>他の選択肢:</strong> ホッピング（重複）、スライディング（連続）、セッション（可変）</li>
+            </ul>
+
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                <strong style="color: #2e7d32;">💡 使い分けの基準:</strong>
+                <ul style="margin: 10px 0; font-size: 14px;">
+                    <li><strong>タンブリング:</strong> 固定間隔の集計、シンプルさ重視</li>
+                    <li><strong>ホッピング:</strong> 移動平均、重複データ分析</li>
+                    <li><strong>スライディング:</strong> リアルタイム更新、低レイテンシ重視</li>
+                    <li><strong>セッション:</strong> ユーザーセッション、可変長アクティビティ</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 18px; font-weight: bold; color: #1565c0;">
+                タンブリングウィンドウで、<br>
+                効率的なストリームデータ処理を実現しましょう！
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
