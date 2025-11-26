@@ -73,6 +73,8 @@ index:
         source: null
       - name: tumbling-window
         source: null
+      - name: update-drain
+        source: null
   - dir: ml
     items:
       - name: auc
