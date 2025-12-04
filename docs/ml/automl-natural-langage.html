@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Natural Language API vs AutoML Natural Language</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2em;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .service-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .service-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid;
+        }
+        .natural-language .service-title {
+            color: #4285f4;
+            border-color: #4285f4;
+        }
+        .automl .service-title {
+            color: #ea4335;
+            border-color: #ea4335;
+        }
+        .feature-section {
+            margin-bottom: 25px;
+        }
+        .feature-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        .feature-content {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        .natural-language .feature-content {
+            border-color: #4285f4;
+        }
+        .automl .feature-content {
+            border-color: #ea4335;
+        }
+        .icon {
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .workflow {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
+        }
+        .workflow-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #333;
+        }
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .workflow-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .workflow-step {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            position: relative;
+        }
+        .workflow-step-number {
+            position: absolute;
+            left: -15px;
+            top: 15px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .natural-language-flow .workflow-step {
+            border-color: #4285f4;
+        }
+        .natural-language-flow .workflow-step-number {
+            background: #4285f4;
+        }
+        .automl-flow .workflow-step {
+            border-color: #ea4335;
+        }
+        .automl-flow .workflow-step-number {
+            background: #ea4335;
+        }
+        .comparison-table {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #ddd;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .check {
+            color: #34a853;
+            font-weight: bold;
+        }
+        .cross {
+            color: #ea4335;
+            font-weight: bold;
+        }
+        .pros-cons {
+            margin-top: 20px;
+        }
+        .pros, .cons {
+            margin-bottom: 15px;
+        }
+        .pros-title {
+            color: #34a853;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .cons-title {
+            color: #ea4335;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .list-item {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .list-item:before {
+            content: "•";
+            position: absolute;
+            left: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Cloud Natural Language API vs AutoML Natural Language 比較</h1>
+    
+    <div class="comparison-container">
+        <div class="service-card natural-language">
+            <div class="service-title">
+                <span class="icon">🚀</span>Cloud Natural Language API
+            </div>
+            
+            <div class="feature-section">
+                <div class="feature-label">📋 概要</div>
+                <div class="feature-content">
+                    Googleが事前に訓練した汎用モデルを使用するマネージドサービス。即座に利用可能で、幅広いテキスト処理に対応。
+                </div>
+            </div>
+            
+            <div class="feature-section">
+                <div class="feature-label">⚡ 特徴</div>
+                <div class="feature-content">
+                    • すぐに使える（訓練不要）<br>
+                    • APIコールのみで利用可能<br>
+                    • 汎用的なモデル<br>
+                    • セットアップが簡単
+                </div>
+            </div>
+            
+            <div class="feature-section">
+                <div class="feature-label">🎯 主な機能</div>
+                <div class="feature-content">
+                    • 感情分析<br>
+                    • エンティティ認識<br>
+                    • 構文解析<br>
+                    • コンテンツ分類<br>
+                    • エンティティ感情分析
+                </div>
+            </div>
+            
+            <div class="feature-section">
+                <div class="feature-label">💰 コスト</div>
+                <div class="feature-content">
+                    従量課金制（API呼び出しごと）。初期コストなし。少量の利用なら低コスト。
+                </div>
+            </div>
+            
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">✅ メリット</div>
+                    <div class="list-item">即座に利用開始可能</div>
+                    <div class="list-item">訓練データ不要</div>
+                    <div class="list-item">メンテナンスフリー</div>
+                    <div class="list-item">多言語対応</div>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">⚠️ デメリット</div>
+                    <div class="list-item">カスタマイズ不可</div>
+                    <div class="list-item">ドメイン特化には限界</div>
+                    <div class="list-item">独自カテゴリ非対応</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="service-card automl">
+            <div class="service-title">
+                <span class="icon">🤖</span>AutoML Natural Language
+            </div>
+            
+            <div class="feature-section">
+                <div class="feature-label">📋 概要</div>
+                <div class="feature-content">
+                    独自のラベル付きデータでカスタムモデルを訓練できるサービス。ドメイン特化型のNLPモデルを構築可能。
+                </div>
+            </div>
+            
+            <div class="feature-section">
+                <div class="feature-label">⚡ 特徴</div>
+                <div class="feature-content">
+                    • カスタムモデル訓練<br>
+                    • 独自データセット利用<br>
+                    • ドメイン特化可能<br>
+                    • GUIで簡単に訓練
+                </div>
+            </div>
+            
+            <div class="feature-section">
+                <div class="feature-label">🎯 主な機能</div>
+                <div class="feature-content">
+                    • カスタム分類<br>
+                    • カスタムエンティティ抽出<br>
+                    • 業界特有の用語対応<br>
+                    • 独自カテゴリ設定<br>
+                    • 継続的な改善
+                </div>
+            </div>
+            
+            <div class="feature-section">
+                <div class="feature-label">💰 コスト</div>
+                <div class="feature-content">
+                    モデル訓練コスト + 予測コスト。初期投資が必要。大量利用で効率的。
+                </div>
+            </div>
+            
+            <div class="pros-cons">
+                <div class="pros">
+                    <div class="pros-title">✅ メリット</div>
+                    <div class="list-item">高精度な結果</div>
+                    <div class="list-item">ドメイン特化可能</div>
+                    <div class="list-item">独自カテゴリ対応</div>
+                    <div class="list-item">継続的改善可能</div>
+                </div>
+                <div class="cons">
+                    <div class="cons-title">⚠️ デメリット</div>
+                    <div class="list-item">訓練データ準備が必要</div>
+                    <div class="list-item">初期コストが高い</div>
+                    <div class="list-item">セットアップに時間</div>
+                    <div class="list-item">メンテナンス必要</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow">
+        <div class="workflow-title">🔄 利用フロー比較</div>
+        <div class="workflow-grid">
+            <div class="workflow-column natural-language-flow">
+                <h3 style="text-align: center; color: #4285f4;">Cloud Natural Language API</h3>
+                <div class="workflow-step">
+                    <div class="workflow-step-number">1</div>
+                    <strong>APIキーを取得</strong><br>
+                    <span style="color: #666;">GCPプロジェクトでAPI有効化</span>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-step-number">2</div>
+                    <strong>APIを呼び出す</strong><br>
+                    <span style="color: #666;">テキストデータを送信</span>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-step-number">3</div>
+                    <strong>結果を受け取る</strong><br>
+                    <span style="color: #666;">即座に分析結果が返る</span>
+                </div>
+                <div style="text-align: center; margin-top: 20px; color: #4285f4; font-weight: bold;">
+                    ⏱️ 所要時間: 数分
+                </div>
+            </div>
+            
+            <div class="workflow-column automl-flow">
+                <h3 style="text-align: center; color: #ea4335;">AutoML Natural Language</h3>
+                <div class="workflow-step">
+                    <div class="workflow-step-number">1</div>
+                    <strong>データセット準備</strong><br>
+                    <span style="color: #666;">ラベル付きデータを収集</span>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-step-number">2</div>
+                    <strong>データをアップロード</strong><br>
+                    <span style="color: #666;">AutoML UIでインポート</span>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-step-number">3</div>
+                    <strong>モデルを訓練</strong><br>
+                    <span style="color: #666;">数時間の訓練時間</span>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-step-number">4</div>
+                    <strong>モデルを評価</strong><br>
+                    <span style="color: #666;">精度を確認・調整</span>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-step-number">5</div>
+                    <strong>モデルをデプロイ</strong><br>
+                    <span style="color: #666;">予測APIとして利用</span>
+                </div>
+                <div style="text-align: center; margin-top: 20px; color: #ea4335; font-weight: bold;">
+                    ⏱️ 所要時間: 数日〜数週間
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="comparison-table">
+        <h2 style="text-align: center; margin-bottom: 25px; color: #333;">📊 詳細比較表</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>比較項目</th>
+                    <th style="color: #4285f4;">Cloud Natural Language API</th>
+                    <th style="color: #ea4335;">AutoML Natural Language</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>セットアップ時間</strong></td>
+                    <td>数分</td>
+                    <td>数日〜数週間</td>
+                </tr>
+                <tr>
+                    <td><strong>訓練データ</strong></td>
+                    <td>不要</td>
+                    <td>必要（数百〜数千サンプル）</td>
+                </tr>
+                <tr>
+                    <td><strong>カスタマイズ性</strong></td>
+                    <td><span class="cross">✗</span> 低い</td>
+                    <td><span class="check">✓</span> 高い</td>
+                </tr>
+                <tr>
+                    <td><strong>機械学習知識</strong></td>
+                    <td>不要</td>
+                    <td>基本的には不要（推奨）</td>
+                </tr>
+                <tr>
+                    <td><strong>初期コスト</strong></td>
+                    <td>低い</td>
+                    <td>高い</td>
+                </tr>
+                <tr>
+                    <td><strong>精度（汎用タスク）</strong></td>
+                    <td>良い</td>
+                    <td>良い</td>
+                </tr>
+                <tr>
+                    <td><strong>精度（ドメイン特化）</strong></td>
+                    <td>普通</td>
+                    <td>非常に高い</td>
+                </tr>
+                <tr>
+                    <td><strong>対応言語</strong></td>
+                    <td>多言語（10+）</td>
+                    <td>限定的（訓練次第）</td>
+                </tr>
+                <tr>
+                    <td><strong>メンテナンス</strong></td>
+                    <td>不要</td>
+                    <td>定期的な再訓練推奨</td>
+                </tr>
+                <tr>
+                    <td><strong>適用例</strong></td>
+                    <td>汎用的なテキスト分析、<br>プロトタイピング</td>
+                    <td>業界特化分析、<br>独自カテゴリ分類</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
