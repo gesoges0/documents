@@ -85,3 +85,7 @@ index:
     items:
       - name: vpcsc
         source: null
+  - dir: security
+    items:
+      - name: anonymization-tokenization
+        source: null
