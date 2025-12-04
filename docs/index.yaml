@@ -81,3 +81,7 @@ index:
         source: null
       - name: automl-natural-langage
         source: null
+  - dir: vpcsc
+    items:
+      - name: vpcsc
+        source: null
