@@ -69,7 +69,7 @@ index:
     items:
       - name: sliding-window
         source: null
-      - name: pardo-groupby-sideinput.html
+      - name: pardo-groupby-sideinput
         source: null
       - name: tumbling-window
         source: null
@@ -78,4 +78,6 @@ index:
   - dir: ml
     items:
       - name: auc
+        source: null
+      - name: automl-natural-langage
         source: null
