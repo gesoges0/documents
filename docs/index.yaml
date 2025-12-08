@@ -77,6 +77,8 @@ index:
         source: null
       - name: update-drain
         source: null
+      - name: shuffle
+        source: null
   - dir: ml
     items:
       - name: auc
