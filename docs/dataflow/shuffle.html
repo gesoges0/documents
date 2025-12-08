@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataflow のシャッフル（Shuffle）解説</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 40px;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 10px;
+        }
+        .concept-box {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .highlight-box {
+            background: #e3f2fd;
+            border-left: 5px solid #1a73e8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .warning-box {
+            background: #fff3e0;
+            border-left: 5px solid #ff9800;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .diagram-container {
+            background: #fafafa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .worker-box {
+            display: inline-block;
+            background: #4285f4;
+            color: white;
+            padding: 15px 20px;
+            margin: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            min-width: 150px;
+        }
+        .worker-input {
+            background: #34a853;
+        }
+        .worker-output {
+            background: #ea4335;
+        }
+        .data-item {
+            display: inline-block;
+            background: #fbbc04;
+            color: #333;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .shuffle-arrow {
+            font-size: 40px;
+            color: #666;
+            margin: 20px 0;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .comparison-table th {
+            background: #1a73e8;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .comparison-table tr:hover {
+            background: #f5f5f5;
+        }
+        .code-block {
+            background: #263238;
+            color: #aed581;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+        }
+        .step-number {
+            display: inline-block;
+            background: #1a73e8;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .step-item {
+            margin: 25px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin: 10px 0;
+        }
+        .network-line {
+            border-top: 3px dashed #ff9800;
+            margin: 20px 0;
+            position: relative;
+        }
+        .network-label {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff3e0;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔀 Dataflow のシャッフル（Shuffle）とは？</h1>
+
+    <div class="concept-box">
+        <h2 style="margin-top: 0;">📌 シャッフルの基本概念</h2>
+        <p style="font-size: 1.1em;">
+            <strong>シャッフル（Shuffle）</strong>とは、分散処理において<strong>データをキーごとに再分配（再グループ化）する操作</strong>のことです。
+        </p>
+        <div class="highlight-box">
+            <strong>🎯 簡単に言うと：</strong>
+            <p>複数のワーカー（処理マシン）に分散していたデータを、特定のキーに基づいて再配置し、同じキーを持つデータを同じワーカーに集める処理です。</p>
+        </div>
+    </div>
+
+    <h2>🔍 シャッフルが発生する典型的な操作</h2>
+
+    <div class="concept-box">
+        <div class="grid-container">
+            <div>
+                <h3 style="color: #1a73e8;">GroupByKey</h3>
+                <p>キーごとにデータをグループ化</p>
+                <div class="code-block">
+# シャッフルが発生
+data | beam.GroupByKey()
+                </div>
+            </div>
+            <div>
+                <h3 style="color: #1a73e8;">CoGroupByKey</h3>
+                <p>複数のデータセットをキーで結合</p>
+                <div class="code-block">
+# シャッフルが発生
+{'orders': orders, 'users': users} \
+| beam.CoGroupByKey()
+                </div>
+            </div>
+            <div>
+                <h3 style="color: #1a73e8;">Combine（グローバル）</h3>
+                <p>全データを集約</p>
+                <div class="code-block">
+# シャッフルが発生
+data | beam.CombineGlobally(sum)
+                </div>
+            </div>
+            <div>
+                <h3 style="color: #1a73e8;">Distinct</h3>
+                <p>重複を除去</p>
+                <div class="code-block">
+# シャッフルが発生
+data | beam.Distinct()
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2>🎬 シャッフルの動作イメージ</h2>
+
+    <div class="diagram-container">
+        <h3 style="margin-top: 0;">GroupByKeyの例：顧客IDごとに購入履歴を集約</h3>
+        
+        <div style="margin: 30px 0;">
+            <h4 style="color: #34a853;">▼ シャッフル前（入力データが分散）</h4>
+            <div style="display: flex; justify-content: center; gap: 30px; margin: 20px 0;">
+                <div>
+                    <div class="worker-box worker-input">Worker 1</div>
+                    <div style="margin-top: 10px;">
+                        <div class="data-item">A: りんご</div>
+                        <div class="data-item">B: みかん</div>
+                        <div class="data-item">C: バナナ</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="worker-box worker-input">Worker 2</div>
+                    <div style="margin-top: 10px;">
+                        <div class="data-item">A: ぶどう</div>
+                        <div class="data-item">C: いちご</div>
+                        <div class="data-item">B: メロン</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="worker-box worker-input">Worker 3</div>
+                    <div style="margin-top: 10px;">
+                        <div class="data-item">A: もも</div>
+                        <div class="data-item">B: なし</div>
+                        <div class="data-item">C: キウイ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="shuffle-arrow">⬇️ シャッフル（データ再配置）⬇️</div>
+        
+        <div class="network-line">
+            <span class="network-label">🌐 ネットワーク転送</span>
+        </div>
+
+        <div style="margin: 30px 0;">
+            <h4 style="color: #ea4335;">▼ シャッフル後（キーごとにグループ化）</h4>
+            <div style="display: flex; justify-content: center; gap: 30px; margin: 20px 0;">
+                <div>
+                    <div class="worker-box worker-output">Worker 1</div>
+                    <div style="margin-top: 10px;">
+                        <div class="data-item">A: りんご</div>
+                        <div class="data-item">A: ぶどう</div>
+                        <div class="data-item">A: もも</div>
+                    </div>
+                    <div style="margin-top: 10px; font-weight: bold; color: #333;">
+                        ↓<br/>A: [りんご, ぶどう, もも]
+                    </div>
+                </div>
+                <div>
+                    <div class="worker-box worker-output">Worker 2</div>
+                    <div style="margin-top: 10px;">
+                        <div class="data-item">B: みかん</div>
+                        <div class="data-item">B: メロン</div>
+                        <div class="data-item">B: なし</div>
+                    </div>
+                    <div style="margin-top: 10px; font-weight: bold; color: #333;">
+                        ↓<br/>B: [みかん, メロン, なし]
+                    </div>
+                </div>
+                <div>
+                    <div class="worker-box worker-output">Worker 3</div>
+                    <div style="margin-top: 10px;">
+                        <div class="data-item">C: バナナ</div>
+                        <div class="data-item">C: いちご</div>
+                        <div class="data-item">C: キウイ</div>
+                    </div>
+                    <div style="margin-top: 10px; font-weight: bold; color: #333;">
+                        ↓<br/>C: [バナナ, いちご, キウイ]
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2>⚙️ シャッフルのプロセス詳細</h2>
+
+    <div class="concept-box">
+        <div class="step-item">
+            <span class="step-number">1</span>
+            <strong>データのパーティショニング（分割）</strong>
+            <p>各ワーカーが保持しているデータを、キーのハッシュ値に基づいて送信先ワーカーを決定します。</p>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">2</span>
+            <strong>中間データの書き込み</strong>
+            <p>送信するデータを一時的にディスク（または Shuffle Service）に書き込みます。</p>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">3</span>
+            <strong>ネットワーク転送</strong>
+            <p>ワーカー間でデータを転送します。これが最もコストがかかる部分です。</p>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">4</span>
+            <strong>データの受信とソート</strong>
+            <p>受信側ワーカーがデータを受け取り、キーごとにソートして処理可能な状態にします。</p>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">5</span>
+            <strong>後続処理の実行</strong>
+            <p>グループ化されたデータに対して、次の変換処理を実行します。</p>
+        </div>
+    </div>
+
+    <h2>🚀 Dataflow Shuffle vs Batch Shuffle</h2>
+
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>項目</th>
+                <th>Batch Shuffle（従来型）</th>
+                <th>Dataflow Shuffle（最適化版）</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>データの保存先</strong></td>
+                <td>各ワーカーのローカルディスク</td>
+                <td>Dataflow Shuffle Service（専用サービス）</td>
+            </tr>
+            <tr>
+                <td><strong>ワーカー間通信</strong></td>
+                <td>ワーカー同士が直接通信</td>
+                <td>Shuffle Service経由で集中管理</td>
+            </tr>
+            <tr>
+                <td><strong>耐障害性</strong></td>
+                <td>ワーカー障害時に再計算が必要</td>
+                <td>Shuffle Service にデータが残るため再計算不要</td>
+            </tr>
+            <tr>
+                <td><strong>パフォーマンス</strong></td>
+                <td>ワーカー数が増えると効率低下</td>
+                <td>大規模でも高効率</td>
+            </tr>
+            <tr>
+                <td><strong>コスト</strong></td>
+                <td>ワーカーのCPU/メモリリソースを消費</td>
+                <td>Shuffle Service利用料が発生（効率的）</td>
+            </tr>
+            <tr>
+                <td><strong>スケーラビリティ</strong></td>
+                <td>ワーカー数に限界あり</td>
+                <td>数千ワーカーでもスケール可能</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>⚠️ シャッフルのコストとパフォーマンス影響</h2>
+
+    <div class="warning-box">
+        <h3 style="margin-top: 0;">🔥 シャッフルが高コストな理由</h3>
+        <ul>
+            <li><strong>ネットワークI/O：</strong> ワーカー間でデータを転送するため、ネットワーク帯域を大量に消費</li>
+            <li><strong>ディスクI/O：</strong> 中間データの書き込み・読み込みが発生</li>
+            <li><strong>メモリ使用：</strong> データのソートやバッファリングでメモリを消費</li>
+            <li><strong>処理時間：</strong> データ転送やソート処理に時間がかかる</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3>📊 パフォーマンスへの影響例</h3>
+        <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>例：1TB のデータを GroupByKey で処理する場合</strong></p>
+            <ul>
+                <li>シャッフルなしの処理: 約10分</li>
+                <li>シャッフルありの処理: 約40分〜60分</li>
+                <li>コスト増加: 2〜3倍</li>
+            </ul>
+            <p style="color: #666; font-size: 0.95em; margin-top: 15px;">
+                ※ データの分散状況やキーの偏りによって大きく変動します
+            </p>
+        </div>
+    </div>
+
+    <h2>💡 シャッフルを最適化するベストプラクティス</h2>
+
+    <div class="grid-container">
+        <div class="concept-box">
+            <h3 style="color: #34a853;">✅ やるべきこと</h3>
+            <ul>
+                <li><strong>CombinePerKey を使う</strong>
+                    <p style="font-size: 0.9em; color: #666;">GroupByKey の前に事前集約を行い、転送データ量を削減</p>
+                </li>
+                <li><strong>Dataflow Shuffle を有効化</strong>
+                    <p style="font-size: 0.9em; color: #666;">--experiments=shuffle_mode=service フラグで有効化</p>
+                </li>
+                <li><strong>キーの偏りを避ける</strong>
+                    <p style="font-size: 0.9em; color: #666;">特定キーにデータが集中しないように設計</p>
+                </li>
+                <li><strong>Combiner を活用</strong>
+                    <p style="font-size: 0.9em; color: #666;">部分集約で転送データを圧縮</p>
+                </li>
+            </ul>
+        </div>
+
+        <div class="concept-box">
+            <h3 style="color: #ea4335;">❌ 避けるべきこと</h3>
+            <ul>
+                <li><strong>不要な GroupByKey</strong>
+                    <p style="font-size: 0.9em; color: #666;">本当に必要か再検討する</p>
+                </li>
+                <li><strong>大きな Value の保持</strong>
+                    <p style="font-size: 0.9em; color: #666;">Key-Value の Value サイズを最小限に</p>
+                </li>
+                <li><strong>多段 GroupByKey</strong>
+                    <p style="font-size: 0.9em; color: #666;">連続したシャッフルは極力避ける</p>
+                </li>
+                <li><strong>ホットキーの放置</strong>
+                    <p style="font-size: 0.9em; color: #666;">特定キーへのデータ集中を解消</p>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>📝 コード例：最適化前 vs 最適化後</h2>
+
+    <div class="grid-container">
+        <div>
+            <h3 style="color: #ea4335;">❌ 非効率なコード</h3>
+            <div class="code-block">
+<span style="color: #82aaff;">import</span> apache_beam <span style="color: #82aaff;">as</span> beam
+
+<span style="color: #999;"># 各ユーザーの購入総額を計算</span>
+result = (
+    p
+    | beam.io.ReadFromText(<span style="color: #c3e88d;">'purchases.csv'</span>)
+    | beam.Map(<span style="color: #82aaff;">lambda</span> x: x.split(<span style="color: #c3e88d;">','</span>))
+    | beam.Map(<span style="color: #82aaff;">lambda</span> x: 
+        (x[0], <span style="color: #f78c6c;">float</span>(x[1])))
+    | beam.GroupByKey()  <span style="color: #ff5370;"># シャッフル発生</span>
+    | beam.Map(<span style="color: #82aaff;">lambda</span> x: 
+        (x[0], <span style="color: #f78c6c;">sum</span>(x[1])))
+)
+            </div>
+            <p style="color: #666; margin-top: 10px;">
+                <strong>問題点：</strong> 全データをシャッフルしてから集約している
+            </p>
+        </div>
+
+        <div>
+            <h3 style="color: #34a853;">✅ 最適化されたコード</h3>
+            <div class="code-block">
+<span style="color: #82aaff;">import</span> apache_beam <span style="color: #82aaff;">as</span> beam
+
+<span style="color: #999;"># CombinePerKey で効率的に集約</span>
+result = (
+    p
+    | beam.io.ReadFromText(<span style="color: #c3e88d;">'purchases.csv'</span>)
+    | beam.Map(<span style="color: #82aaff;">lambda</span> x: x.split(<span style="color: #c3e88d;">','</span>))
+    | beam.Map(<span style="color: #82aaff;">lambda</span> x: 
+        (x[0], <span style="color: #f78c6c;">float</span>(x[1])))
+    | beam.CombinePerKey(<span style="color: #f78c6c;">sum</span>)  <span style="color: #aed581;"># 効率的</span>
+)
+            </div>
+            <p style="color: #666; margin-top: 10px;">
+                <strong>改善点：</strong> 事前集約により転送データ量を大幅削減
+            </p>
+        </div>
+    </div>
+
+    <h2>🎯 まとめ</h2>
+
+    <div class="concept-box">
+        <div style="background: #e3f2fd; padding: 25px; border-radius: 8px;">
+            <h3 style="margin-top: 0; color: #1a73e8;">シャッフルの重要ポイント</h3>
+            <ul style="font-size: 1.05em;">
+                <li><strong>シャッフルとは：</strong> キーに基づいてデータを再分配する操作</li>
+                <li><strong>発生タイミング：</strong> GroupByKey、CoGroupByKey、グローバル集約などで発生</li>
+                <li><strong>コスト：</strong> ネットワーク・ディスクI/O が大きく、処理時間とコストに影響</li>
+                <li><strong>最適化：</strong> CombinePerKey、Dataflow Shuffle Service の利用が効果的</li>
+                <li><strong>設計思想：</strong> 不要なシャッフルを避け、必要な場合は効率化する</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #fff3e0; border-radius: 8px;">
+            <strong>💡 実務での心構え：</strong>
+            <p>大崎のオフィスでDataflowパイプラインを設計する際は、シャッフルが発生する箇所を意識し、データ量が大きい場合は必ず最適化を検討しましょう！特にGCP Data Engineer試験でも頻出のテーマです。</p>
+        </div>
+    </div>
+
+</body>
+</html>
