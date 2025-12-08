@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pub/Sub vs Kafka 比較図解</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 40px;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 10px;
+        }
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .service-box {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .service-box h3 {
+            margin-top: 0;
+            font-size: 24px;
+            text-align: center;
+        }
+        .pubsub-header {
+            color: #1a73e8;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 10px;
+        }
+        .kafka-header {
+            color: #000;
+            border-bottom: 3px solid #000;
+            padding-bottom: 10px;
+        }
+        .architecture-diagram {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            min-height: 300px;
+        }
+        .component {
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            display: inline-block;
+            min-width: 120px;
+        }
+        .publisher {
+            background: #4285f4;
+            color: white;
+        }
+        .topic {
+            background: #fbbc04;
+            color: #333;
+        }
+        .subscription {
+            background: #34a853;
+            color: white;
+        }
+        .subscriber {
+            background: #ea4335;
+            color: white;
+        }
+        .kafka-producer {
+            background: #231f20;
+            color: white;
+        }
+        .kafka-topic {
+            background: #d4d4d4;
+            color: #231f20;
+            border: 2px solid #231f20;
+        }
+        .kafka-partition {
+            background: #a0a0a0;
+            color: white;
+            font-size: 0.9em;
+            padding: 10px;
+            margin: 5px;
+            min-width: 80px;
+        }
+        .kafka-consumer {
+            background: #231f20;
+            color: white;
+        }
+        .arrow {
+            display: inline-block;
+            margin: 0 10px;
+            font-size: 24px;
+            color: #666;
+        }
+        .feature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .feature-table th {
+            background: #1a73e8;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        .feature-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .feature-table tr:hover {
+            background: #f5f5f5;
+        }
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .pros, .cons {
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .pros {
+            background: #e8f5e9;
+            border-left: 5px solid #4caf50;
+        }
+        .cons {
+            background: #ffebee;
+            border-left: 5px solid #f44336;
+        }
+        .pros h4, .cons h4 {
+            margin-top: 0;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .partition-container {
+            border: 2px dashed #666;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .partition-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Google Cloud Pub/Sub vs Apache Kafka 徹底比較</h1>
+
+    <h2>🏗️ アーキテクチャの違い</h2>
+    
+    <div class="comparison-container">
+        <!-- Pub/Sub -->
+        <div class="service-box">
+            <h3 class="pubsub-header">Google Cloud Pub/Sub</h3>
+            <div class="architecture-diagram">
+                <div class="flow-diagram">
+                    <div class="component publisher">Publisher</div>
+                    <span class="arrow">→</span>
+                    <div class="component topic">Topic</div>
+                    <span class="arrow">→</span>
+                    <div class="component subscription">Subscription</div>
+                    <span class="arrow">→</span>
+                    <div class="component subscriber">Subscriber</div>
+                </div>
+                <div style="margin-top: 30px; text-align: center;">
+                    <div class="component topic" style="display: block; margin: 10px auto; width: fit-content;">Topic A</div>
+                    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 15px;">
+                        <div>
+                            <div class="component subscription" style="font-size: 0.9em;">Sub 1 (Push)</div>
+                            <div class="arrow" style="transform: rotate(90deg);">→</div>
+                            <div class="component subscriber" style="font-size: 0.9em;">HTTP Endpoint</div>
+                        </div>
+                        <div>
+                            <div class="component subscription" style="font-size: 0.9em;">Sub 2 (Pull)</div>
+                            <div class="arrow" style="transform: rotate(90deg);">→</div>
+                            <div class="component subscriber" style="font-size: 0.9em;">App</div>
+                        </div>
+                        <div>
+                            <div class="component subscription" style="font-size: 0.9em;">Sub 3 (Pull)</div>
+                            <div class="arrow" style="transform: rotate(90deg);">→</div>
+                            <div class="component subscriber" style="font-size: 0.9em;">Service</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+                <strong>特徴:</strong>
+                <ul style="margin: 10px 0;">
+                    <li>完全マネージド型サービス</li>
+                    <li>1つのTopicに複数のSubscription</li>
+                    <li>Push/Pull両方のモデルをサポート</li>
+                    <li>自動スケーリング</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Kafka -->
+        <div class="service-box">
+            <h3 class="kafka-header">Apache Kafka</h3>
+            <div class="architecture-diagram">
+                <div class="flow-diagram">
+                    <div class="component kafka-producer">Producer</div>
+                    <span class="arrow">→</span>
+                    <div class="component kafka-topic">Topic</div>
+                    <span class="arrow">→</span>
+                    <div class="component kafka-consumer">Consumer</div>
+                </div>
+                <div style="margin-top: 30px; text-align: center;">
+                    <div class="partition-container">
+                        <div class="partition-label">Topic A (3 Partitions)</div>
+                        <div style="display: flex; justify-content: center; gap: 10px;">
+                            <div class="component kafka-partition">P0<br/>📝📝📝</div>
+                            <div class="component kafka-partition">P1<br/>📝📝📝</div>
+                            <div class="component kafka-partition">P2<br/>📝📝📝</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 30px; margin-top: 20px;">
+                        <div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 5px;">Consumer Group A</div>
+                            <div class="component kafka-consumer" style="font-size: 0.9em;">Consumer 1</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 5px;">Consumer Group B</div>
+                            <div class="component kafka-consumer" style="font-size: 0.9em;">Consumer 2</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
+                <strong>特徴:</strong>
+                <ul style="margin: 10px 0;">
+                    <li>分散ストリーミングプラットフォーム</li>
+                    <li>パーティションによる並列処理</li>
+                    <li>Consumer Groupによるスケーラビリティ</li>
+                    <li>メッセージの永続化と再読み込み</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <h2>📋 主要な違い一覧</h2>
+    
+    <table class="feature-table">
+        <thead>
+            <tr>
+                <th>項目</th>
+                <th>Google Cloud Pub/Sub</th>
+                <th>Apache Kafka</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>管理方式</strong></td>
+                <td>フルマネージド（サーバーレス）</td>
+                <td>セルフマネージド（インフラ管理が必要）</td>
+            </tr>
+            <tr>
+                <td><strong>配信モデル</strong></td>
+                <td>Push/Pull両方</td>
+                <td>Pullのみ</td>
+            </tr>
+            <tr>
+                <td><strong>メッセージ保持</strong></td>
+                <td>最大7日間（デフォルト7日）</td>
+                <td>設定次第で無制限（ディスク容量まで）</td>
+            </tr>
+            <tr>
+                <td><strong>順序保証</strong></td>
+                <td>Ordering Keyを使用（同じKey内でのみ）</td>
+                <td>パーティション単位で保証</td>
+            </tr>
+            <tr>
+                <td><strong>スケーラビリティ</strong></td>
+                <td>自動スケーリング</td>
+                <td>手動でパーティション追加・クラスタ拡張</td>
+            </tr>
+            <tr>
+                <td><strong>料金モデル</strong></td>
+                <td>従量課金（データ量・リクエスト数）</td>
+                <td>インフラコスト（サーバー・ストレージ）</td>
+            </tr>
+            <tr>
+                <td><strong>レイテンシ</strong></td>
+                <td>やや高め（数百ms）</td>
+                <td>低い（数ms〜数十ms）</td>
+            </tr>
+            <tr>
+                <td><strong>再配信</strong></td>
+                <td>Seekを使用して特定時点に戻れる</td>
+                <td>Offsetで任意の位置から読み取り可能</td>
+            </tr>
+            <tr>
+                <td><strong>エコシステム</strong></td>
+                <td>GCP統合（Dataflow、BigQueryなど）</td>
+                <td>豊富な外部ツール（Kafka Connect、KSQL）</td>
+            </tr>
+            <tr>
+                <td><strong>運用負荷</strong></td>
+                <td>低い（GCPが管理）</td>
+                <td>高い（Zookeeper、ブローカーの管理）</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>🔄 データフローの比較</h2>
+    
+    <div class="comparison-container">
+        <div class="service-box">
+            <h3 class="pubsub-header">Pub/Sub のメッセージフロー</h3>
+            <div style="padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                <div style="text-align: center; margin: 20px 0;">
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                        <strong>1. Publisher が Topic に公開</strong><br/>
+                        <span style="font-size: 0.9em; color: #666;">メッセージはGoogleのインフラに保存</span>
+                    </div>
+                    <div class="arrow" style="transform: rotate(90deg); margin: 10px 0;">→</div>
+                    <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                        <strong>2. Subscription が受信</strong><br/>
+                        <span style="font-size: 0.9em; color: #666;">各Subscriptionは独立して全メッセージを取得</span>
+                    </div>
+                    <div class="arrow" style="transform: rotate(90deg); margin: 10px 0;">→</div>
+                    <div style="background: #fff3e0; padding: 15px; border-radius: 5px;">
+                        <strong>3. Subscriber が処理</strong><br/>
+                        <span style="font-size: 0.9em; color: #666;">Push: Pub/SubがHTTP POSTで配信<br/>Pull: アプリが能動的に取得</span>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding: 10px; background: white; border-left: 4px solid #1a73e8;">
+                    <strong>💡 ポイント:</strong> 1つのTopicから複数のSubscriberが独立してメッセージを受信可能
+                </div>
+            </div>
+        </div>
+
+        <div class="service-box">
+            <h3 class="kafka-header">Kafka のメッセージフロー</h3>
+            <div style="padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                <div style="text-align: center; margin: 20px 0;">
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                        <strong>1. Producer が Topic に送信</strong><br/>
+                        <span style="font-size: 0.9em; color: #666;">Keyに基づいて特定パーティションに保存</span>
+                    </div>
+                    <div class="arrow" style="transform: rotate(90deg); margin: 10px 0;">→</div>
+                    <div style="background: #e0e0e0; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                        <strong>2. パーティションに分散保存</strong><br/>
+                        <span style="font-size: 0.9em; color: #666;">順序保証はパーティション内でのみ</span>
+                    </div>
+                    <div class="arrow" style="transform: rotate(90deg); margin: 10px 0;">→</div>
+                    <div style="background: #fafafa; padding: 15px; border-radius: 5px;">
+                        <strong>3. Consumer が読み取り</strong><br/>
+                        <span style="font-size: 0.9em; color: #666;">Offsetを管理して自分のペースで処理<br/>Consumer Groupで負荷分散</span>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding: 10px; background: white; border-left: 4px solid #000;">
+                    <strong>💡 ポイント:</strong> パーティションによる並列処理と、Offsetによる柔軟な読み取り制御
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2>✅ 使い分けのガイドライン</h2>
+
+    <div class="comparison-container">
+        <div class="service-box">
+            <h3 class="pubsub-header">Pub/Sub を選ぶべき場合</h3>
+            <div class="pros">
+                <h4>👍 メリット</h4>
+                <ul>
+                    <li>運用負荷を最小化したい</li>
+                    <li>GCPエコシステムとの統合</li>
+                    <li>自動スケーリングが必要</li>
+                    <li>Push配信を活用したい</li>
+                    <li>グローバル展開が容易</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h4>👎 制約</h4>
+                <ul>
+                    <li>レイテンシがやや高い</li>
+                    <li>メッセージ保持期間が最大7日</li>
+                    <li>ベンダーロックインのリスク</li>
+                    <li>高トラフィックでコストが高くなる可能性</li>
+                </ul>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+                <strong>📌 適したユースケース:</strong>
+                <ul>
+                    <li>イベント駆動型マイクロサービス</li>
+                    <li>非同期ワークフロー</li>
+                    <li>IoTデータの収集</li>
+                    <li>通知システム</li>
+                    <li>ログ収集とストリーミング</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="service-box">
+            <h3 class="kafka-header">Kafka を選ぶべき場合</h3>
+            <div class="pros">
+                <h4>👍 メリット</h4>
+                <ul>
+                    <li>超低レイテンシが必要</li>
+                    <li>大量データの高速処理</li>
+                    <li>メッセージの長期保持</li>
+                    <li>複雑なストリーム処理（Kafka Streams）</li>
+                    <li>ベンダーニュートラル</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h4>👎 制約</h4>
+                <ul>
+                    <li>運用負荷が高い</li>
+                    <li>インフラ管理が必要</li>
+                    <li>学習曲線が急</li>
+                    <li>スケーリングに手動介入が必要</li>
+                </ul>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
+                <strong>📌 適したユースケース:</strong>
+                <ul>
+                    <li>リアルタイム分析</li>
+                    <li>イベントソーシング</li>
+                    <li>ログ集約とモニタリング</li>
+                    <li>CDC（Change Data Capture）</li>
+                    <li>ストリーム処理パイプライン</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <h2>💰 コスト比較の考え方</h2>
+    
+    <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div>
+                <h4 style="color: #1a73e8;">Pub/Sub のコスト構造</h4>
+                <ul>
+                    <li><strong>メッセージ量に応じた課金</strong>
+                        <ul>
+                            <li>最初の10GB: 無料</li>
+                            <li>以降: データ量で課金</li>
+                        </ul>
+                    </li>
+                    <li><strong>予測しやすいコスト</strong></li>
+                    <li><strong>運用コストがゼロ</strong></li>
+                    <li><strong>少量なら低コスト、大量だと高額に</strong></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="color: #000;">Kafka のコスト構造</h4>
+                <ul>
+                    <li><strong>固定的なインフラコスト</strong>
+                        <ul>
+                            <li>サーバー（EC2など）</li>
+                            <li>ストレージ</li>
+                            <li>ネットワーク</li>
+                        </ul>
+                    </li>
+                    <li><strong>運用人件費が必要</strong></li>
+                    <li><strong>スケールメリットあり</strong></li>
+                    <li><strong>大量処理で割安になる傾向</strong></li>
+                </ul>
+            </div>
+        </div>
+        <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 5px;">
+            <strong>💡 目安:</strong> 月間データ量が数TB以上ならKafkaが割安、それ以下ならPub/Subが総合的に安価になることが多い
+        </div>
+    </div>
+
+    <h2>🎯 まとめ</h2>
+    
+    <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 50%; padding: 20px; vertical-align: top; border-right: 2px solid #1a73e8;">
+                    <h4 style="color: #1a73e8; margin-top: 0;">Google Cloud Pub/Sub</h4>
+                    <p><strong>シンプルで運用が楽なメッセージング</strong></p>
+                    <p>GCPを使っていて、運用負荷を減らしたい場合や、中小規模のメッセージングには最適。Push配信やGCPサービスとの統合が強み。</p>
+                </td>
+                <td style="width: 50%; padding: 20px; vertical-align: top;">
+                    <h4 style="color: #000; margin-top: 0;">Apache Kafka</h4>
+                    <p><strong>高性能で柔軟なストリーミング</strong></p>
+                    <p>大規模データ処理やリアルタイム分析、複雑なストリーム処理が必要な場合に最適。運用負荷は高いが、パフォーマンスと柔軟性は抜群。</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>
