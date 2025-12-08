@@ -91,3 +91,7 @@ index:
     items:
       - name: anonymization-tokenization
         source: null
+  - dir: pubsub
+    items:
+      - name: pubsub-vs-kafka
+        source: null
